@@ -118,9 +118,11 @@ Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
   boundary between them, and set its speaker and languages
   (`PATCH|POST /segments/:id…`). Edits to one recording are serialised by
   locking its row.
-- Each segment has a transcription (with its writing: Latin, katakana or
-  mixed), a Japanese translation and an optional English one, in
-  `fork_transcripts`. Every save adds a version (`GET
+- Ainu segments have two transcriptions, one in Latin letters and one in
+  katakana (Japanese passages within them written in Japanese), and a
+  Japanese translation; Japanese-only segments have a Japanese
+  transcription instead. Any segment can have an English translation. All
+  are in `fork_transcripts`, by `kind`. Every save adds a version (`GET
   /segments/:id/transcripts?kind=` lists them). A save names the version it
   started from; if someone else saved since, it gets 409 and the other text,
   and saving again replaces it knowingly.

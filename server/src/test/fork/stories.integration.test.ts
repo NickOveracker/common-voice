@@ -369,10 +369,11 @@ describeIntegration('stories API', () => {
       await new Promise(resolve => setTimeout(resolve, 500))
     }
     expect(recording.status).toBe('ready')
-    expect(recording.progress).toEqual({
+    expect(recording.progress).toMatchObject({
       segments: 3,
-      transcribed: 0,
-      translated_ja: 0,
+      transcription_latin: 0,
+      transcription_kana: 0,
+      translation_ja: 0,
     })
 
     let segments = (await api(MEMBER, 'GET', `/recordings/${id}/segments`)).json
@@ -395,18 +396,29 @@ describeIntegration('stories API', () => {
       'POST',
       `/segments/${first.id}/transcripts`,
       {
-        kind: 'transcription',
+        kind: 'transcription_latin',
         text: 'tan to ta  ', // trimmed
-        script: 'latin',
         base_id: null,
       }
     )
     expect(transcribed.status).toBe(201)
     expect(transcribed.json).toMatchObject({
       text: 'tan to ta',
-      script: 'latin',
       is_mine: true,
     })
+
+    // The katakana transcription is separate, and can hold Japanese
+    const kana = await api(
+      FACILITATOR,
+      'POST',
+      `/segments/${first.id}/transcripts`,
+      {
+        kind: 'transcription_kana',
+        text: 'タント タ 今日は',
+        base_id: null,
+      }
+    )
+    expect(kana.status).toBe(201)
 
     // A second edit that started from no version is refused, not lost
     const stale = await api(
@@ -414,9 +426,8 @@ describeIntegration('stories API', () => {
       'POST',
       `/segments/${first.id}/transcripts`,
       {
-        kind: 'transcription',
-        text: 'タント タ',
-        script: 'katakana',
+        kind: 'transcription_latin',
+        text: 'tanto',
         base_id: null,
       }
     )
@@ -428,9 +439,8 @@ describeIntegration('stories API', () => {
       'POST',
       `/segments/${first.id}/transcripts`,
       {
-        kind: 'transcription',
+        kind: 'transcription_latin',
         text: 'tanto ta',
-        script: 'latin',
         base_id: transcribed.json.id,
       }
     )
@@ -441,9 +451,8 @@ describeIntegration('stories API', () => {
       base_id: null,
     })
     await api(MEMBER, 'POST', `/segments/${second.id}/transcripts`, {
-      kind: 'transcription',
+      kind: 'transcription_latin',
       text: 'pirka',
-      script: 'latin',
       base_id: null,
     })
 
@@ -451,7 +460,7 @@ describeIntegration('stories API', () => {
     const versions = await api(
       MEMBER,
       'GET',
-      `/segments/${first.id}/transcripts?kind=transcription`
+      `/segments/${first.id}/transcripts?kind=transcription_latin`
     )
     expect(versions.json.map((v: { text: string }) => v.text)).toEqual([
       'tanto ta',
@@ -508,8 +517,8 @@ describeIntegration('stories API', () => {
       7000,
       third.start_ms,
     ])
-    expect(segments[1].transcription.text).toBe('pirka')
-    expect(segments[2].transcription).toBeNull()
+    expect(segments[1].transcription_latin.text).toBe('pirka')
+    expect(segments[2].transcription_latin).toBeNull()
     expect(
       (
         await api(MEMBER, 'POST', `/segments/${second.id}/split`, {
@@ -522,7 +531,8 @@ describeIntegration('stories API', () => {
     segments = (await api(MEMBER, 'POST', `/segments/${first.id}/merge`)).json
     expect(segments).toHaveLength(3)
     expect(segments[0]).toMatchObject({ start_ms: 0, end_ms: 7000 })
-    expect(segments[0].transcription.text).toBe('tanto ta pirka')
+    expect(segments[0].transcription_latin.text).toBe('tanto ta pirka')
+    expect(segments[0].transcription_kana.text).toBe('タント タ 今日は')
     expect(segments[0].translation_ja.text).toBe('今日は')
 
     const listed = (await api(MEMBER, 'GET', '/recordings')).json.find(
@@ -530,8 +540,11 @@ describeIntegration('stories API', () => {
     )
     expect(listed.progress).toEqual({
       segments: 3,
-      transcribed: 1,
-      translated_ja: 1,
+      transcription_latin: 1,
+      transcription_kana: 1,
+      transcription_ja: 0,
+      translation_ja: 1,
+      translation_en: 0,
     })
 
     // Detecting again would throw transcripts away: refused. Only those who

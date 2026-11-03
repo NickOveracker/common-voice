@@ -6,7 +6,7 @@ import { hasRole } from '../roles'
 import { canManageSpeaker, currentConsents } from './speakers'
 import { chunkPath, getAudioUrl, putObject } from './storage'
 import { queueRecordingProcessing } from './processing'
-import { segmentProgress } from './segments'
+import { emptyCounts, Progress, segmentProgress } from './segments'
 import { withTransaction } from './transaction'
 
 // Long recordings (stories, interviews, conversations). Audio is sent in
@@ -105,7 +105,7 @@ async function presentRecording(
   user: SessionUser,
   row: RecordingRow,
   speakers: { id: number; display_name: string }[],
-  progress: { segments: number; transcribed: number; translated_ja: number }
+  progress: Progress | undefined
 ) {
   return {
     id: row.id,
@@ -124,7 +124,7 @@ async function presentRecording(
     is_mine: row.created_by === user.client_id,
     can_manage: await canManageRecording(user, row),
     error: row.status === 'failed' ? row.error : null,
-    progress: progress ?? { segments: 0, transcribed: 0, translated_ja: 0 },
+    progress: progress ?? { segments: 0, ...emptyCounts() },
   }
 }
 

@@ -27,9 +27,7 @@ import {
   StoriesApiError,
   Transcript,
   TRANSCRIPT_KINDS,
-  TRANSCRIPT_SCRIPTS,
   TranscriptKind,
-  TranscriptScript,
   updateSegment,
 } from './api'
 import { formatDuration, formatTime } from './format'
@@ -45,15 +43,42 @@ const LANGUAGES: RecordingLanguage[] = ['ain', 'ja']
 // Shortest segment a split or boundary move may leave (as on the server)
 const MIN_SEGMENT_MS = 200
 
-const LABELS: Record<TranscriptKind, string> = {
-  transcription: 'fork-transcribe-transcription',
-  translation_ja: 'fork-transcribe-translation-ja',
-  translation_en: 'fork-transcribe-translation-en',
+const FIELDS: Record<TranscriptKind, { label: string; lang: string }> = {
+  transcription_latin: {
+    label: 'fork-transcribe-transcription-latin',
+    lang: 'ain-Latn',
+  },
+  transcription_kana: {
+    label: 'fork-transcribe-transcription-kana',
+    lang: 'ain-Kana',
+  },
+  transcription_ja: { label: 'fork-transcribe-transcription-ja', lang: 'ja' },
+  translation_ja: { label: 'fork-transcribe-translation-ja', lang: 'ja' },
+  translation_en: { label: 'fork-transcribe-translation-en', lang: 'en' },
 }
+
+// Ainu is transcribed in Latin letters and in katakana, and translated into
+// Japanese; Japanese-only speech just gets a Japanese transcription. Fields
+// with text are shown regardless, so nothing is hidden when the languages
+// change.
+const kindsToShow = (
+  languages: RecordingLanguage[],
+  drafts: Drafts,
+  showEnglish: boolean
+) =>
+  TRANSCRIPT_KINDS.filter(kind => {
+    const relevant = {
+      transcription_latin: languages.includes('ain'),
+      transcription_kana: languages.includes('ain'),
+      transcription_ja: !languages.includes('ain'),
+      translation_ja: languages.includes('ain'),
+      translation_en: showEnglish,
+    }[kind]
+    return relevant || drafts[kind].text !== ''
+  })
 
 type Draft = {
   text: string
-  script: TranscriptScript | null
   // The version this draft started from
   baseId: number | null
 }
@@ -66,7 +91,6 @@ const draftsFor = (segment: Segment): Drafts =>
       kind,
       {
         text: segment[kind]?.text ?? '',
-        script: segment[kind]?.script ?? null,
         baseId: segment[kind]?.id ?? null,
       },
     ])
@@ -74,10 +98,7 @@ const draftsFor = (segment: Segment): Drafts =>
 
 const isDirty = (segment: Segment, drafts: Drafts) =>
   TRANSCRIPT_KINDS.some(
-    kind =>
-      drafts[kind].text !== (segment[kind]?.text ?? '') ||
-      (kind === 'transcription' &&
-        drafts[kind].script !== (segment[kind]?.script ?? null))
+    kind => drafts[kind].text !== (segment[kind]?.text ?? '')
   )
 
 const ErrorMessage = ({ message }: { message: string }) => (
@@ -201,22 +222,17 @@ const SegmentRow = ({
     let updated = segment
     for (const kind of TRANSCRIPT_KINDS) {
       const draft = drafts[kind]
-      const unchanged =
-        draft.text === (segment[kind]?.text ?? '') &&
-        (kind !== 'transcription' ||
-          draft.script === (segment[kind]?.script ?? null))
+      const unchanged = draft.text === (segment[kind]?.text ?? '')
       if (unchanged && draft.baseId === (segment[kind]?.id ?? null)) continue
       try {
         const transcript = await addTranscript(segment.id, {
           kind,
           text: draft.text,
-          script: kind === 'transcription' ? draft.script : null,
           base_id: draft.baseId,
         })
         updated = { ...updated, [kind]: transcript }
         next[kind] = {
           text: transcript.text,
-          script: transcript.script,
           baseId: transcript.id,
         }
       } catch (e) {
@@ -308,52 +324,19 @@ const SegmentRow = ({
       </div>
 
       <div className="fork-transcribe__texts">
-        <div className="fork-transcribe__text">
+        {kindsToShow(languages, drafts, showEnglish).map(kind => (
           <LabeledTextArea
-            label={l10n.getString(LABELS.transcription)}
-            value={drafts.transcription.text}
+            key={kind}
+            label={l10n.getString(FIELDS[kind].label)}
+            value={drafts[kind].text}
             rows={2}
-            lang={languages.length === 1 ? languages[0] : undefined}
+            lang={FIELDS[kind].lang}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setDraft('transcription', { text: event.target.value })
+              setDraft(kind, { text: event.target.value })
             }
           />
-          <LabeledSelect
-            label={l10n.getString('fork-transcribe-script')}
-            value={drafts.transcription.script ?? ''}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-              setDraft('transcription', {
-                script: (event.target.value || null) as TranscriptScript,
-              })
-            }>
-            <option value="" />
-            {TRANSCRIPT_SCRIPTS.map(script => (
-              <option key={script} value={script}>
-                {l10n.getString(`fork-transcribe-script-${script}`)}
-              </option>
-            ))}
-          </LabeledSelect>
-        </div>
-        <LabeledTextArea
-          label={l10n.getString(LABELS.translation_ja)}
-          value={drafts.translation_ja.text}
-          rows={2}
-          lang="ja"
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setDraft('translation_ja', { text: event.target.value })
-          }
-        />
-        {showEnglish ? (
-          <LabeledTextArea
-            label={l10n.getString(LABELS.translation_en)}
-            value={drafts.translation_en.text}
-            rows={2}
-            lang="en"
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setDraft('translation_en', { text: event.target.value })
-            }
-          />
-        ) : (
+        ))}
+        {!showEnglish && !drafts.translation_en.text && (
           <Localized id="fork-transcribe-add-english">
             <button
               type="button"
@@ -369,7 +352,7 @@ const SegmentRow = ({
           key={kind}
           id="fork-transcribe-conflict"
           vars={{
-            field: l10n.getString(LABELS[kind as TranscriptKind]),
+            field: l10n.getString(FIELDS[kind as TranscriptKind].label),
             text: current?.text || '—',
           }}>
           <p className="fork-stories__error" role="alert" />
@@ -509,6 +492,11 @@ const Transcriber = ({
       <Localized id="fork-transcribe-help">
         <p className="fork-stories__hint" />
       </Localized>
+      {recording.languages.includes('ain') && (
+        <Localized id="fork-transcribe-japanese-within">
+          <p className="fork-stories__hint" />
+        </Localized>
+      )}
       <ol className="fork-transcribe__segments">
         {segments.map((segment, index) => (
           <SegmentRow

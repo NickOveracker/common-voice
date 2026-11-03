@@ -250,8 +250,14 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     )
     log(`segment 1 played and stopped at ${stoppedAt.toFixed(2)}s`)
 
-    await first.getByLabel('書き起こし').fill('irankarapte')
-    await first.getByLabel('表記').selectOption('latin')
+    // Ainu in Latin letters and in katakana, separately; Japanese stays
+    // Japanese within them
+    await first
+      .getByLabel('書き起こし（ラテン文字）')
+      .fill('irankarapte 今日は')
+    await first
+      .getByLabel('書き起こし（カタカナ）')
+      .fill('イランカラㇷ゚テ 今日は')
     await first.getByLabel('日本語訳').fill('こんにちは')
     // Escape in a text box plays the segment
     await first.getByLabel('日本語訳').press('Escape')
@@ -330,13 +336,14 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     )
     await page.reload()
     await page.waitForSelector('.fork-transcribe__segment')
-    const kept = await page
-      .locator('.fork-transcribe__segment')
-      .first()
-      .getByLabel('書き起こし')
-      .inputValue()
-    log(`merged back; after reload the transcription is "${kept}"`)
-    if (kept !== 'irankarapte') throw new Error('transcription was not kept')
+    const kept = page.locator('.fork-transcribe__segment').first()
+    const latin = await kept.getByLabel('書き起こし（ラテン文字）').inputValue()
+    const kana = await kept.getByLabel('書き起こし（カタカナ）').inputValue()
+    log(`merged back; after reload: "${latin}" / "${kana}"`)
+    // NFC keeps ㇷ゚ (small fu with a semi-voiced mark) as typed
+    if (latin !== 'irankarapte 今日は' || kana !== 'イランカラㇷ゚テ 今日は') {
+      throw new Error('transcriptions were not kept')
+    }
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({
       path: `${shots}/5b-transcribe.png`,

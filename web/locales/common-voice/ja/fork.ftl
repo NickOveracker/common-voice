@@ -36,7 +36,10 @@ fork-stories-status-processing = 処理中…
 fork-stories-status-failed = 処理に失敗しました
 fork-stories-download-original = 元のファイルをダウンロード
 fork-stories-transcribe = 書き起こし・翻訳
-fork-stories-progress = 区間 { $segments } · 書き起こし済み { $transcribed } · 日本語訳済み { $translated }
+fork-stories-progress = 区間 { $segments } · 書き起こし済み ラテン文字 { $latin }・カタカナ { $kana }{ $japanese ->
+        [0] {""}
+       *[other] ・日本語 { $japanese }
+    } · 日本語訳済み { $translated }
 fork-stories-save-partial = アップロード済みの部分を保存する
 fork-stories-resume-upload = 同じファイルを選び直すとアップロードを再開できます
 
@@ -129,11 +132,10 @@ fork-transcribe-loop = 区間をくり返す
 fork-transcribe-help = 区間の ▶ を押すと、その区間を再生して終わりで止まります。入力中は Esc キーで再生・一時停止できます。「ここで分割」と「終わりをここに」は再生位置を使います。
 fork-transcribe-speaker = 話者
 fork-transcribe-speaker-unset = （未設定）
-fork-transcribe-transcription = 書き起こし
-fork-transcribe-script = 表記
-fork-transcribe-script-latin = ラテン文字
-fork-transcribe-script-katakana = カタカナ
-fork-transcribe-script-mixed = 混在
+fork-transcribe-transcription-latin = 書き起こし（ラテン文字）
+fork-transcribe-transcription-kana = 書き起こし（カタカナ）
+fork-transcribe-transcription-ja = 書き起こし（日本語）
+fork-transcribe-japanese-within = 書き起こしの中の日本語の部分は、日本語で書いてください。
 fork-transcribe-translation-ja = 日本語訳
 fork-transcribe-translation-en = 英訳
 fork-transcribe-add-english = ＋ 英訳を追加

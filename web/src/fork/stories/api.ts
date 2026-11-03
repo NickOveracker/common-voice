@@ -65,7 +65,8 @@ export type Recording = {
   can_manage: boolean
   error: string | null
   uploaded_chunks?: number[]
-  progress: { segments: number; transcribed: number; translated_ja: number }
+  // Segments, and how many have text of each kind
+  progress: { segments: number } & Record<TranscriptKind, number>
 }
 
 export type NewRecording = {
@@ -153,20 +154,20 @@ export const completeRecording = (recordingId: number, chunkCount: number) =>
 export const recordingAudioUrl = (id: number, original = false) =>
   `${BASE}/recordings/${id}/audio${original ? '?original=true' : ''}`
 
+// Ainu is transcribed in Latin letters and in katakana (Japanese passages
+// within them in Japanese); Japanese-only segments get transcription_ja
 export const TRANSCRIPT_KINDS = [
-  'transcription',
+  'transcription_latin',
+  'transcription_kana',
+  'transcription_ja',
   'translation_ja',
   'translation_en',
 ] as const
 export type TranscriptKind = typeof TRANSCRIPT_KINDS[number]
 
-export const TRANSCRIPT_SCRIPTS = ['latin', 'katakana', 'mixed'] as const
-export type TranscriptScript = typeof TRANSCRIPT_SCRIPTS[number]
-
 export type Transcript = {
   id: number
   text: string
-  script: TranscriptScript | null
   created_at: string
   is_mine: boolean
 }
@@ -204,7 +205,6 @@ export const addTranscript = (
   transcript: {
     kind: TranscriptKind
     text: string
-    script?: TranscriptScript | null
     base_id: number | null
   }
 ) =>

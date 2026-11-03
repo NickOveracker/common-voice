@@ -29,7 +29,6 @@ type TranscriptRow = {
   id: number
   segment_id: number
   kind: Kind
-  script: string | null
   text: string
   created_by: string | null
   created_at: string
@@ -44,7 +43,6 @@ function presentTranscript(user: SessionUser, row: TranscriptRow) {
   return {
     id: row.id,
     text: row.text,
-    script: row.script,
     created_at: row.created_at,
     is_mine: row.created_by === user.client_id,
   }
@@ -91,53 +89,60 @@ async function presentSegments(user: SessionUser, recordingId: number) {
       end_ms: segment.end_ms,
       speaker_id: segment.speaker_id,
       languages: segment.languages ? segment.languages.split(',') : null,
-      transcription: current('transcription'),
-      translation_ja: current('translation_ja'),
-      translation_en: current('translation_en'),
+      ...Object.fromEntries(
+        TRANSCRIPT_KINDS.map(kind => [kind, current(kind)])
+      ),
     }
   })
 }
 
-// How far transcription has got, for the list of recordings. Empty texts
-// (cleared ones) don't count.
+export type Progress = { segments: number } & Record<Kind, number>
+
+// How far transcription has got, for the list of recordings: how many
+// segments have a current, non-empty text of each kind.
 export async function segmentProgress(recordingIds: number[]) {
-  const progress = new Map<
-    number,
-    { segments: number; transcribed: number; translated_ja: number }
-  >()
+  const progress = new Map<number, Progress>()
   if (recordingIds.length === 0) return progress
 
-  const [rows] = await db.query(
+  const [segments] = await db.query(
+    `SELECT recording_id, COUNT(*) AS count FROM fork_segments WHERE recording_id IN (?) GROUP BY recording_id`,
+    [recordingIds]
+  )
+  for (const row of segments) {
+    progress.set(row.recording_id, {
+      segments: Number(row.count),
+      ...emptyCounts(),
+    })
+  }
+
+  const [counts] = await db.query(
     `
-    SELECT s.recording_id,
-      COUNT(*) AS segments,
-      SUM(EXISTS (
-        SELECT 1 FROM fork_transcripts t
-        WHERE t.id = (SELECT MAX(id) FROM fork_transcripts
-                      WHERE segment_id = s.id AND kind = 'transcription')
-          AND t.text <> ''
-      )) AS transcribed,
-      SUM(EXISTS (
-        SELECT 1 FROM fork_transcripts t
-        WHERE t.id = (SELECT MAX(id) FROM fork_transcripts
-                      WHERE segment_id = s.id AND kind = 'translation_ja')
-          AND t.text <> ''
-      )) AS translated_ja
-    FROM fork_segments s
-    WHERE s.recording_id IN (?)
-    GROUP BY s.recording_id
+    SELECT s.recording_id, t.kind, COUNT(*) AS count
+    FROM fork_transcripts t
+    JOIN fork_segments s ON s.id = t.segment_id
+    JOIN (
+      SELECT MAX(t2.id) AS id FROM fork_transcripts t2
+      JOIN fork_segments s2 ON s2.id = t2.segment_id
+      WHERE s2.recording_id IN (?)
+      GROUP BY t2.segment_id, t2.kind
+    ) latest ON latest.id = t.id
+    WHERE t.text <> ''
+    GROUP BY s.recording_id, t.kind
     `,
     [recordingIds]
   )
-  for (const row of rows) {
-    progress.set(row.recording_id, {
-      segments: Number(row.segments),
-      transcribed: Number(row.transcribed),
-      translated_ja: Number(row.translated_ja),
-    })
+  for (const row of counts) {
+    const entry = progress.get(row.recording_id)
+    if (entry) entry[row.kind as Kind] = Number(row.count)
   }
   return progress
 }
+
+export const emptyCounts = () =>
+  Object.fromEntries(TRANSCRIPT_KINDS.map(kind => [kind, 0])) as Record<
+    Kind,
+    number
+  >
 
 async function findReadyRecording(id: number) {
   const [[row]] = await db.query(
@@ -359,15 +364,10 @@ export const mergeSegment = (request: Request, response: Response) =>
             t => t.segment_id === next.id && t.kind === kind
           )
           if (!second?.text.trim()) continue
-          const script =
-            !first?.text.trim() || first.script === second.script
-              ? second.script
-              : 'mixed'
           await connection.query(`INSERT INTO fork_transcripts SET ?`, [
             {
               segment_id: segment.id,
               kind,
-              script: kind === 'transcription' ? script : null,
               text: joinTexts(first?.text, second.text),
               created_by: user,
             },
@@ -406,8 +406,6 @@ export const addTranscript = async (request: Request, response: Response) => {
   const user = request.session.user
   const { kind, base_id } = request.body
   const text = request.body.text.normalize('NFC').trim()
-  const script =
-    kind === 'transcription' && text ? request.body.script ?? null : null
 
   const result = await withSegment(
     Number(request.params.segmentId),
@@ -419,7 +417,7 @@ export const addTranscript = async (request: Request, response: Response) => {
       if ((current?.id ?? null) !== base_id) {
         return { conflict: current ? presentTranscript(user, current) : null }
       }
-      if (current && current.text === text && current.script === script) {
+      if (current && current.text === text) {
         return { saved: presentTranscript(user, current) }
       }
       const [inserted] = await connection.query(
@@ -428,7 +426,6 @@ export const addTranscript = async (request: Request, response: Response) => {
           {
             segment_id: segment.id,
             kind,
-            script,
             text,
             created_by: user.client_id,
           },

@@ -123,14 +123,16 @@ export const CompleteRecordingRequest: AllowedSchema = {
   },
 }
 
+// Ainu is transcribed twice, in Latin letters and in katakana; Japanese
+// passages within them are written in Japanese. Segments only in Japanese
+// have a Japanese transcription instead.
 export const TRANSCRIPT_KINDS = [
-  'transcription',
+  'transcription_latin',
+  'transcription_kana',
+  'transcription_ja',
   'translation_ja',
   'translation_en',
 ] as const
-
-// Writing systems used for Ainu
-export const TRANSCRIPT_SCRIPTS = ['latin', 'katakana', 'mixed'] as const
 
 export const UpdateSegmentRequest: AllowedSchema = {
   type: 'object',
@@ -167,10 +169,6 @@ export const AddTranscriptRequest: AllowedSchema = {
     kind: { type: 'string', enum: [...TRANSCRIPT_KINDS] },
     // Empty clears it
     text: { type: 'string', maxLength: 5000 },
-    script: {
-      type: ['string', 'null'],
-      enum: [...TRANSCRIPT_SCRIPTS, null],
-    },
     // The version this edit started from (null if there was none), so that
     // two people editing at once don't overwrite each other unseen
     base_id: { type: ['integer', 'null'] },

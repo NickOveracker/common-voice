@@ -36,7 +36,10 @@ fork-stories-status-processing = Processing…
 fork-stories-status-failed = Processing failed
 fork-stories-download-original = Download original
 fork-stories-transcribe = Transcribe and translate
-fork-stories-progress = { $segments } segments · { $transcribed } transcribed · { $translated } translated into Japanese
+fork-stories-progress = { $segments } segments · transcribed in Latin letters { $latin }, katakana { $kana }{ $japanese ->
+        [0] {""}
+       *[other] , Japanese { $japanese }
+    } · translated into Japanese { $translated }
 fork-stories-save-partial = Save the part that was uploaded
 fork-stories-resume-upload = Choose the file again to resume the upload
 
@@ -129,11 +132,10 @@ fork-transcribe-loop = Repeat the segment
 fork-transcribe-help = ▶ on a segment plays it and stops at its end. While typing, Esc plays or pauses the segment. “Split here” and “End here” use the playback position.
 fork-transcribe-speaker = Speaker
 fork-transcribe-speaker-unset = (not set)
-fork-transcribe-transcription = Transcription
-fork-transcribe-script = Writing
-fork-transcribe-script-latin = Latin letters
-fork-transcribe-script-katakana = Katakana
-fork-transcribe-script-mixed = Mixed
+fork-transcribe-transcription-latin = Transcription (Latin letters)
+fork-transcribe-transcription-kana = Transcription (katakana)
+fork-transcribe-transcription-ja = Transcription (Japanese)
+fork-transcribe-japanese-within = Write any Japanese in the transcriptions as Japanese.
 fork-transcribe-translation-ja = Japanese translation
 fork-transcribe-translation-en = English translation
 fork-transcribe-add-english = + Add an English translation

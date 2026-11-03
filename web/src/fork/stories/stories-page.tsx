@@ -151,8 +151,10 @@ const RecordingCard = ({
             id="fork-stories-progress"
             vars={{
               segments: recording.progress.segments,
-              transcribed: recording.progress.transcribed,
-              translated: recording.progress.translated_ja,
+              latin: recording.progress.transcription_latin,
+              kana: recording.progress.transcription_kana,
+              japanese: recording.progress.transcription_ja,
+              translated: recording.progress.translation_ja,
             }}>
             <p className="fork-stories__meta" />
           </Localized>

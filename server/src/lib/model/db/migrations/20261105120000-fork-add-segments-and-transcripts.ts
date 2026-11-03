@@ -30,9 +30,11 @@ export const up = async function (db: any): Promise<any> {
     CREATE TABLE IF NOT EXISTS fork_transcripts (
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       segment_id INT UNSIGNED NOT NULL,
-      kind ENUM('transcription', 'translation_ja', 'translation_en') NOT NULL,
-      -- Writing system of a transcription
-      script ENUM('latin', 'katakana', 'mixed') DEFAULT NULL,
+      -- Ainu is transcribed separately in Latin letters and in katakana
+      -- (Japanese passages within them in Japanese writing); segments only
+      -- in Japanese have a Japanese transcription instead
+      kind ENUM('transcription_latin', 'transcription_kana', 'transcription_ja',
+                'translation_ja', 'translation_en') NOT NULL,
       text TEXT CHARACTER SET utf8mb4 NOT NULL,
       created_by CHAR(36) DEFAULT NULL,
       created_at DATETIME NOT NULL DEFAULT NOW(),

@@ -2,7 +2,14 @@ import PromiseRouter from 'express-promise-router'
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { getMySQLInstance } from '../lib/model/db/mysql'
-import { getRoles, grantRole, isRole, requireRole, revokeRole } from './roles'
+import {
+  adminEmails,
+  getRoles,
+  grantRole,
+  isRole,
+  requireRole,
+  revokeRole,
+} from './roles'
 import storiesRouter from './stories/routes'
 
 // Fork API, mounted at /api/v1/community.
@@ -24,10 +31,13 @@ const listUsers = async (_request: Request, response: Response) => {
     GROUP BY uc.client_id
     ORDER BY uc.email
   `)
+  const configured = adminEmails()
   response.json(
-    rows.map((row: { roles: string | null }) => ({
+    rows.map((row: { email: string; roles: string | null }) => ({
       ...row,
       roles: row.roles ? row.roles.split(',') : [],
+      // Admin through CV_ADMIN_EMAILS, which can't be revoked here
+      configured_admin: configured.includes(row.email.toLowerCase()),
     }))
   )
 }

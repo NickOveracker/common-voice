@@ -164,6 +164,23 @@ fork-review-restore = Use this version
 fork-review-filter = Only segments that need checking
 fork-stories-review-progress = { $approved } checked · { $needsWork } need work
 
+## Admin
+fork-home-intro = A place for the Ainu community to keep its spoken stories, conversations and memories, and to transcribe and translate them together. Only members can see what is here.
+fork-admin-title = Admin
+fork-admin-only = Only admins can see this page.
+fork-admin-roles-intro = Anyone signed in can record, transcribe and translate. Roles add the following:
+fork-role-admin = Admin
+fork-role-admin-description = gives and removes roles, and can do everything
+fork-role-moderator = Moderator
+fork-role-moderator-description = looks after recordings and speakers, and can review
+fork-role-reviewer = Reviewer
+fork-role-reviewer-description = checks transcriptions and translations
+fork-admin-filter = Search by name or email
+fork-admin-user = Member
+fork-admin-role-for = { $role }: { $user }
+fork-admin-configured = Admin through the server settings
+fork-admin-configured-note = Admins listed in the server's CV_ADMIN_EMAILS setting are always admins; that can only be changed on the server. You can't remove your own admin role.
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive
 

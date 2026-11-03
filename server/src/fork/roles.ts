@@ -18,7 +18,7 @@ export const isRole = (value: string): value is Role =>
 
 const db = getMySQLInstance()
 
-function adminEmails(): string[] {
+export function adminEmails(): string[] {
   return (getConfig().ADMIN_EMAILS || '')
     .split(',')
     .map(email => email.trim().toLowerCase())

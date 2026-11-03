@@ -246,3 +246,18 @@ export const addReview = (
 export type Role = 'admin' | 'moderator' | 'reviewer'
 
 export const getOwnRoles = () => request<{ roles: Role[] }>('GET', '/roles')
+
+export type CommunityUser = {
+  client_id: string
+  email: string
+  username: string | null
+  roles: Role[]
+  // Admin through the server's CV_ADMIN_EMAILS setting
+  configured_admin: boolean
+}
+
+export const listUsers = () => request<CommunityUser[]>('GET', '/admin/users')
+export const grantRole = (clientId: string, role: Role) =>
+  request<null>('PUT', `/admin/users/${clientId}/roles/${role}`)
+export const revokeRole = (clientId: string, role: Role) =>
+  request<null>('DELETE', `/admin/users/${clientId}/roles/${role}`)

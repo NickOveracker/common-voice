@@ -372,18 +372,31 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     )
     await reviewer.click('.profile-info button.save')
     await reviewerSaved
-    // The facilitator, an admin, makes them a reviewer
-    const granted = await page.evaluate(async () => {
-      const users = await (await fetch('/api/v1/community/admin/users')).json()
-      const user = users.find(u => u.email === 'reviewer@example.org')
-      return (
-        await fetch(
-          `/api/v1/community/admin/users/${user.client_id}/roles/reviewer`,
-          { method: 'PUT' }
-        )
-      ).status
-    })
-    log(`facilitator granted the reviewer role: ${granted}`)
+    // The facilitator, an admin, makes them a reviewer on the admin page,
+    // linked from the home page
+    await page.goto(`${BASE}/ain`)
+    await page.locator('.fork-community-links').waitFor()
+    await page.screenshot({ path: `${shots}/0-home.png`, fullPage: true })
+    await page.locator('.fork-community-links a:has-text("管理")').click()
+    const reviewerBox = page.getByLabel(`確認担当：reviewer-${RUN}`)
+    await reviewerBox.waitFor()
+    // Admin through CV_ADMIN_EMAILS: shown, but can't be changed here
+    if (!(await page.getByLabel(/^管理者：facilitator-/).isDisabled())) {
+      throw new Error('configured admin can be changed on the page')
+    }
+    await reviewerBox.check()
+    await page.waitForFunction(
+      label =>
+        [...document.querySelectorAll('input[type=checkbox]')].some(
+          box =>
+            box.getAttribute('aria-label') === label &&
+            box.checked &&
+            !box.disabled
+        ),
+      `確認担当：reviewer-${RUN}`
+    )
+    log('facilitator made them a reviewer on the admin page')
+    await page.screenshot({ path: `${shots}/8-admin.png`, fullPage: true })
 
     await reviewer.goto(storyUrl)
     const reviewed = reviewer.locator('.fork-transcribe__segment').first()
@@ -407,7 +420,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await reviewerContext.close()
 
     // The facilitator sees the reviews, and cannot review their own text
-    await page.reload()
+    await page.goto(storyUrl)
     const own = page.locator('.fork-transcribe__segment').first()
     await own.locator('text=✓ 確認済み').waitFor()
     await own.locator('text=要修正：ㇷ゚の位置を確認').waitFor()
@@ -447,6 +460,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       ['stories/new', 'New recording'],
       ['speakers', 'Speakers'],
       [storyPath, TITLE],
+      ['admin', 'Admin'],
     ]) {
       await page.goto(`${BASE}/ain/${path}`)
       await page

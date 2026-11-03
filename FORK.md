@@ -84,6 +84,15 @@ Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
 - `GET /api/v1/community/admin/users`: users and their roles (admin)
 - `PUT|DELETE /api/v1/community/admin/users/:clientId/roles/:role` (admin)
 
+Admins give and remove roles on `/<locale>/admin`
+(`web/src/fork/admin/admin-page.tsx`), linked from the home page. Members
+only appear there once they have saved their profile.
+
+On private instances the home page is the fork's own
+(`web/src/fork/private-home.tsx`): the site name, a short introduction and
+links to the community's pages. Upstream's home page promotes Mozilla's
+datasets with photos of other communities.
+
 ## Speakers and recordings
 
 `server/src/fork/stories/`, API under `/api/v1/community` (signed-in users):

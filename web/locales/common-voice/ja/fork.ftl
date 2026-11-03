@@ -164,6 +164,23 @@ fork-review-restore = この版に戻す
 fork-review-filter = 確認が必要な区間だけ表示
 fork-stories-review-progress = 確認済み { $approved } · 要修正 { $needsWork }
 
+## Admin
+fork-home-intro = アイヌのコミュニティが、語りや会話、思い出の声を残し、みんなで書き起こし・翻訳するための場所です。ここにあるものは、メンバーだけが見られます。
+fork-admin-title = 管理
+fork-admin-only = このページは管理者のみが見られます。
+fork-admin-roles-intro = ログインした人は誰でも、録音・書き起こし・翻訳ができます。役割を与えると、次のこともできるようになります。
+fork-role-admin = 管理者
+fork-role-admin-description = 役割を与えたり外したりでき、すべての操作ができます
+fork-role-moderator = モデレーター
+fork-role-moderator-description = 録音と話者を管理し、確認もできます
+fork-role-reviewer = 確認担当
+fork-role-reviewer-description = 書き起こしと翻訳を確認します
+fork-admin-filter = 名前またはメールアドレスで検索
+fork-admin-user = メンバー
+fork-admin-role-for = { $role }：{ $user }
+fork-admin-configured = サーバーの設定による管理者
+fork-admin-configured-note = サーバーの CV_ADMIN_EMAILS に設定された人は常に管理者で、変更はサーバー側でのみできます。自分の管理者の役割は外せません。
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ
 

@@ -1,22 +1,23 @@
-import React from 'react'
+import * as React from 'react'
+import { Localized } from '@fluent/react'
 
-import { HeroSection } from '../components/pages/home/hero-section'
-import { ActionItemsSection } from '../components/pages/home/action-items-section'
 import Page from '../components/ui/page'
-import { isContributable, useLocale } from '../components/locale-helpers'
+import PageHeading from '../components/ui/page-heading'
+import CommunityLinks from './community-links'
 
-// The upstream home page without Mozilla's community, partner, developer and
-// dataset sections.
-const PrivateHome = () => {
-  const [locale] = useLocale()
-  const isLocaleContributable = isContributable(locale)
-
-  return (
-    <Page className="home">
-      <HeroSection isLocaleContributable={isLocaleContributable} />
-      <ActionItemsSection isLocaleContributable={isLocaleContributable} />
-    </Page>
-  )
-}
+// The home page of a private instance: the site's name, what it is for, and
+// its pages. Upstream's home page is about Mozilla's datasets, with photos
+// of other communities.
+const PrivateHome = () => (
+  <Page className="fork-home" isCentered>
+    <PageHeading>
+      <Localized id="fork-site-name" />
+    </PageHeading>
+    <Localized id="fork-home-intro">
+      <p className="fork-home__intro" />
+    </Localized>
+    <CommunityLinks />
+  </Page>
+)
 
 export default PrivateHome

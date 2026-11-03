@@ -698,9 +698,14 @@ describeIntegration('stories API', () => {
 
     const users = await api(FACILITATOR, 'GET', '/admin/users')
     expect(users.status).toBe(200)
-    expect(users.json.map((u: { email: string }) => u.email)).toEqual([
-      FACILITATOR.email,
-      MEMBER.email,
+    expect(
+      users.json.map((u: { email: string; configured_admin: boolean }) => [
+        u.email,
+        u.configured_admin,
+      ])
+    ).toEqual([
+      [FACILITATOR.email, true],
+      [MEMBER.email, false],
     ])
 
     const grant = await api(

@@ -127,6 +127,17 @@ CV_STORAGE_LOCAL_DEVELOPMENT_ENDPOINT=http://cvfork-storage:8080 \
 npx jest --forceExit src/test/fork
 ```
 
+### Browser test
+
+`scripts/fork-e2e/run.sh` starts MySQL, Redis, fake-gcs-server and Keycloak
+in docker, builds the app with `CV_PRIVATE_INSTANCE=true`, runs it with
+login required and the strict CSP, and drives headless Chromium with a fake
+microphone through `scripts/fork-e2e/e2e.js`: sign-in gate, Keycloak login,
+Japanese interface on `/ain/` URLs, adding a speaker and consent, recording
+with pause/resume, processing, playback, switching the interface to
+English, and checking that no outside hosts are contacted. Run it after
+merging upstream. `scripts/fork-e2e/run.sh --clean` removes the containers.
+
 ## Settings
 
 See `.env-private.example`.

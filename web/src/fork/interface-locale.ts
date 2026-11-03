@@ -74,11 +74,11 @@ export function useInterfaceLocale(
     }
   }, [])
 
+  // The available locales are often still loading on the first render, so
+  // the stored choice can only be applied once they arrive.
   React.useEffect(() => {
-    if (!available.includes(locale)) {
-      setLocale(resolveInterfaceLocale(available))
-    }
-  }, [available])
+    setLocale(resolveInterfaceLocale(available))
+  }, [available.join(',')])
 
   current = locale
   return [locale, setInterfaceLocale]

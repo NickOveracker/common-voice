@@ -8,3 +8,12 @@ html[lang='ain'] {
     sans-serif;
   --strong-font-family: var(--base-font-family);
 }
+
+/* Ainu and Japanese content (titles, names, transcripts) also appears when
+   the interface is in English, so fall back to Japanese fonts there too. */
+html[lang='en'] {
+  --base-font-family: 'Open Sans', 'Noto Sans JP', 'Noto Sans CJK JP',
+    'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  --strong-font-family: 'Zilla Slab', 'Georgia', 'Noto Serif JP',
+    'Noto Serif CJK JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+}

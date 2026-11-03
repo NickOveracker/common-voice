@@ -1,6 +1,7 @@
 type Module = typeof import('./interface-locale') & {
   React: typeof import('react')
   ReactDOM: typeof import('react-dom')
+  act: typeof import('react-dom/test-utils').act
 }
 
 // React and the renderer must come from the same isolated module registry
@@ -14,6 +15,7 @@ const load = (privateInstance: boolean): Module => {
       ...require('./interface-locale'),
       React: require('react'),
       ReactDOM: require('react-dom'),
+      act: require('react-dom/test-utils').act,
     }
     /* eslint-enable @typescript-eslint/no-var-requires */
   })
@@ -82,5 +84,34 @@ describe('interface locale', () => {
     const module = load(true)
     module.setInterfaceLocale('ain')
     expect(resolve(module)).toBe('ain')
+  })
+
+  it('applies the stored choice once the languages have loaded', () => {
+    setNavigatorLanguages(['ja-JP'])
+    const module = load(true)
+    localStorage.setItem('interface-locale', 'en')
+
+    let result: string
+    const Probe = ({ available }: { available: string[] }): null => {
+      const [locale] = module.useInterfaceLocale(available)
+      result = locale
+      return null
+    }
+    const container = document.createElement('div')
+    module.act(() => {
+      module.ReactDOM.render(
+        module.React.createElement(Probe, { available: [] }),
+        container
+      )
+    })
+    module.act(() => {
+      module.ReactDOM.render(
+        module.React.createElement(Probe, {
+          available: languages.translatedLocales,
+        }),
+        container
+      )
+    })
+    expect(result).toBe('en')
   })
 })

@@ -330,6 +330,221 @@ describeIntegration('stories API', () => {
     )
   }, 60_000)
 
+  it('finds segments at pauses, and lets anyone transcribe them', async () => {
+    // 14 s: speech-like tone with pauses at 4–5 s and 9–10 s
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'segments-test-'))
+    const file = path.join(dir, 'pauses.webm')
+    execFileSync('ffmpeg', [
+      '-loglevel',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'aevalsrc=if(lt(mod(t\\,5)\\,4)\\,0.5*sin(2*PI*440*t)\\,0):d=14',
+      '-c:a',
+      'libopus',
+      file,
+    ])
+    const created = await api(FACILITATOR, 'POST', '/recordings', {
+      title: 'With pauses',
+      languages: ['ain'],
+      speaker_ids: [speakerId],
+      source: 'upload',
+    })
+    const id = created.json.id
+    await api(
+      FACILITATOR,
+      'PUT',
+      `/recordings/${id}/chunks/0`,
+      undefined,
+      fs.readFileSync(file)
+    )
+    await api(FACILITATOR, 'POST', `/recordings/${id}/complete`, {
+      chunk_count: 1,
+    })
+    let recording
+    for (let attempt = 0; attempt < 60; attempt++) {
+      recording = (await api(MEMBER, 'GET', `/recordings/${id}`)).json
+      if (recording.status !== 'processing') break
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+    expect(recording.status).toBe('ready')
+    expect(recording.progress).toEqual({
+      segments: 3,
+      transcribed: 0,
+      translated_ja: 0,
+    })
+
+    let segments = (await api(MEMBER, 'GET', `/recordings/${id}/segments`)).json
+    expect(segments).toHaveLength(3)
+    expect(segments[0].start_ms).toBe(0)
+    expect(Math.abs(segments[0].end_ms - 4500)).toBeLessThan(300)
+    expect(Math.abs(segments[1].end_ms - 9500)).toBeLessThan(300)
+    expect(segments[2].end_ms).toBe(recording.duration_ms)
+    // The recording's only speaker
+    expect(segments.map((s: { speaker_id: number }) => s.speaker_id)).toEqual([
+      speakerId,
+      speakerId,
+      speakerId,
+    ])
+    const [first, second, third] = segments
+
+    // Anyone signed in can transcribe, starting from no version
+    const transcribed = await api(
+      MEMBER,
+      'POST',
+      `/segments/${first.id}/transcripts`,
+      {
+        kind: 'transcription',
+        text: 'tan to ta  ', // trimmed
+        script: 'latin',
+        base_id: null,
+      }
+    )
+    expect(transcribed.status).toBe(201)
+    expect(transcribed.json).toMatchObject({
+      text: 'tan to ta',
+      script: 'latin',
+      is_mine: true,
+    })
+
+    // A second edit that started from no version is refused, not lost
+    const stale = await api(
+      FACILITATOR,
+      'POST',
+      `/segments/${first.id}/transcripts`,
+      {
+        kind: 'transcription',
+        text: 'タント タ',
+        script: 'katakana',
+        base_id: null,
+      }
+    )
+    expect(stale.status).toBe(409)
+    expect(stale.json.current.text).toBe('tan to ta')
+
+    const revised = await api(
+      FACILITATOR,
+      'POST',
+      `/segments/${first.id}/transcripts`,
+      {
+        kind: 'transcription',
+        text: 'tanto ta',
+        script: 'latin',
+        base_id: transcribed.json.id,
+      }
+    )
+    expect(revised.status).toBe(201)
+    await api(MEMBER, 'POST', `/segments/${first.id}/transcripts`, {
+      kind: 'translation_ja',
+      text: '今日は',
+      base_id: null,
+    })
+    await api(MEMBER, 'POST', `/segments/${second.id}/transcripts`, {
+      kind: 'transcription',
+      text: 'pirka',
+      script: 'latin',
+      base_id: null,
+    })
+
+    // Every version is kept
+    const versions = await api(
+      MEMBER,
+      'GET',
+      `/segments/${first.id}/transcripts?kind=transcription`
+    )
+    expect(versions.json.map((v: { text: string }) => v.text)).toEqual([
+      'tanto ta',
+      'tan to ta',
+    ])
+
+    // Only the recording's own speakers, and boundaries in range
+    expect(
+      (
+        await api(MEMBER, 'PATCH', `/segments/${first.id}`, {
+          speaker_id: 999999,
+        })
+      ).status
+    ).toBe(400)
+    expect(
+      (
+        await api(MEMBER, 'PATCH', `/segments/${first.id}`, {
+          end_ms: second.end_ms + 1000,
+        })
+      ).status
+    ).toBe(400)
+    expect(
+      (
+        await api(MEMBER, 'PATCH', `/segments/${third.id}`, {
+          end_ms: 13000,
+        })
+      ).status
+    ).toBe(400)
+
+    // Moving a boundary moves the next segment's start too
+    segments = (
+      await api(MEMBER, 'PATCH', `/segments/${first.id}`, {
+        end_ms: 4000,
+        speaker_id: speakerId,
+        languages: ['ain', 'ja'],
+      })
+    ).json
+    expect(segments[0]).toMatchObject({
+      end_ms: 4000,
+      speaker_id: speakerId,
+      languages: ['ain', 'ja'],
+    })
+    expect(segments[1].start_ms).toBe(4000)
+
+    // Splitting: the first part keeps the transcript
+    segments = (
+      await api(MEMBER, 'POST', `/segments/${second.id}/split`, {
+        at_ms: 7000,
+      })
+    ).json
+    expect(segments.map((s: { start_ms: number }) => s.start_ms)).toEqual([
+      0,
+      4000,
+      7000,
+      third.start_ms,
+    ])
+    expect(segments[1].transcription.text).toBe('pirka')
+    expect(segments[2].transcription).toBeNull()
+    expect(
+      (
+        await api(MEMBER, 'POST', `/segments/${second.id}/split`, {
+          at_ms: 7100,
+        })
+      ).status
+    ).toBe(400)
+
+    // Merging joins the transcripts into a new version
+    segments = (await api(MEMBER, 'POST', `/segments/${first.id}/merge`)).json
+    expect(segments).toHaveLength(3)
+    expect(segments[0]).toMatchObject({ start_ms: 0, end_ms: 7000 })
+    expect(segments[0].transcription.text).toBe('tanto ta pirka')
+    expect(segments[0].translation_ja.text).toBe('今日は')
+
+    const listed = (await api(MEMBER, 'GET', '/recordings')).json.find(
+      (r: { id: number }) => r.id === id
+    )
+    expect(listed.progress).toEqual({
+      segments: 3,
+      transcribed: 1,
+      translated_ja: 1,
+    })
+
+    // Detecting again would throw transcripts away: refused. Only those who
+    // manage the recording may ask.
+    expect(
+      (await api(MEMBER, 'POST', `/recordings/${id}/segments/detect`)).status
+    ).toBe(403)
+    expect(
+      (await api(FACILITATOR, 'POST', `/recordings/${id}/segments/detect`))
+        .status
+    ).toBe(409)
+  })
+
   it('blocks new recordings once consent is withdrawn', async () => {
     const speaker = await api(FACILITATOR, 'GET', `/speakers/${speakerId}`)
     const withdraw = await api(

@@ -200,7 +200,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     const card = page.locator('li', {
       has: page.locator(`h2:has-text("${TITLE}")`),
     })
-    const meta = await card.locator('.fork-stories__meta').innerText()
+    const meta = await card.locator('.fork-stories__meta').first().innerText()
     log(`stories list shows: ${meta}`)
 
     const audio = await page.evaluate(async () => {
@@ -220,9 +220,133 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       throw new Error(`unexpected duration ${audio}`)
     await page.screenshot({ path: `${shots}/5-stories.png`, fullPage: true })
 
+    // Transcribing: segments found at pauses, played one at a time
+    await card.locator('a:has-text("書き起こし・翻訳")').click()
+    await page.waitForSelector('.fork-transcribe__segment', { timeout: 30000 })
+    const segments = page.locator('.fork-transcribe__segment')
+    const segmentCount = await segments.count()
+    const ranges = await segments
+      .locator('.fork-transcribe__range')
+      .allInnerTexts()
+    log(`recording page: ${segmentCount} segment(s): ${ranges.join(', ')}`)
+
+    const first = segments.first()
+    await first.locator('.fork-transcribe__play').click()
+    await page.waitForFunction(
+      () => document.querySelector('audio').paused === false,
+      null,
+      { timeout: 10000 }
+    )
+    // Stops by itself at the end of the segment
+    await page.waitForFunction(
+      () => document.querySelector('audio').paused,
+      null,
+      {
+        timeout: 40000,
+      }
+    )
+    const stoppedAt = await page.evaluate(
+      () => document.querySelector('audio').currentTime
+    )
+    log(`segment 1 played and stopped at ${stoppedAt.toFixed(2)}s`)
+
+    await first.getByLabel('書き起こし').fill('irankarapte')
+    await first.getByLabel('表記').selectOption('latin')
+    await first.getByLabel('日本語訳').fill('こんにちは')
+    // Escape in a text box plays the segment
+    await first.getByLabel('日本語訳').press('Escape')
+    await page.waitForFunction(
+      () => document.querySelector('audio').paused === false,
+      null,
+      { timeout: 10000 }
+    )
+    log('Escape plays the segment while typing')
+    await first.locator('button:has-text("保存")').click()
+    await first.locator('text=保存しました').waitFor()
+
+    // Split the first segment in the middle of where playback is
+    const middle = await page.evaluate(() => {
+      const row = document.querySelector('.fork-transcribe__segment')
+      const audio = document.querySelector('audio')
+      audio.pause()
+      return row.querySelector('.fork-transcribe__range').textContent
+    })
+    const [startText, endText] = middle
+      .replace(/^\d+\.\s*/, '')
+      .split('–')
+      .map(t => t.trim())
+    const toSeconds = t => {
+      const [m, sec] = t.split(':')
+      return Number(m) * 60 + Number(sec)
+    }
+    const midSeconds = (toSeconds(startText) + toSeconds(endText)) / 2
+    await page.evaluate(t => {
+      document.querySelector('audio').currentTime = t
+    }, midSeconds)
+    await page.waitForTimeout(300)
+    await first.locator('button:has-text("ここで分割")').click()
+    await page.waitForFunction(
+      n => document.querySelectorAll('.fork-transcribe__segment').length === n,
+      segmentCount + 1
+    )
+    log(
+      `split segment 1 at ${midSeconds.toFixed(1)}s: ${
+        segmentCount + 1
+      } segments`
+    )
+    // Segment 1 now ends at the split: playing it stops there
+    await page
+      .locator('.fork-transcribe__segment')
+      .first()
+      .locator('.fork-transcribe__play')
+      .click()
+    await page.waitForFunction(
+      () => document.querySelector('audio').paused === false,
+      null,
+      { timeout: 10000 }
+    )
+    await page.waitForFunction(
+      () => document.querySelector('audio').paused,
+      null,
+      { timeout: 20000 }
+    )
+    const splitStop = await page.evaluate(
+      () => document.querySelector('audio').currentTime
+    )
+    log(`segment 1 stopped at ${splitStop.toFixed(2)}s`)
+    if (Math.abs(splitStop - midSeconds) > 0.3) {
+      throw new Error('segment did not stop at its end')
+    }
+
+    // Merge back: the transcript stays
+    await page
+      .locator('.fork-transcribe__segment')
+      .first()
+      .locator('button:has-text("次と結合")')
+      .click()
+    await page.waitForFunction(
+      n => document.querySelectorAll('.fork-transcribe__segment').length === n,
+      segmentCount
+    )
+    await page.reload()
+    await page.waitForSelector('.fork-transcribe__segment')
+    const kept = await page
+      .locator('.fork-transcribe__segment')
+      .first()
+      .getByLabel('書き起こし')
+      .inputValue()
+    log(`merged back; after reload the transcription is "${kept}"`)
+    if (kept !== 'irankarapte') throw new Error('transcription was not kept')
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.screenshot({
+      path: `${shots}/5b-transcribe.png`,
+      fullPage: true,
+    })
+    const storyPath = new URL(page.url()).pathname.replace(/^\/ain\//, '')
+
     // Interface language switch keeps the contribution language in the URL
     await page.evaluate(() => localStorage.setItem('interface-locale', 'en'))
-    await page.reload()
+    await page.goto(`${BASE}/ain/stories`)
     await page.getByRole('heading', { name: 'Stories' }).waitFor()
     log(`English interface at ${page.url()}`)
     await page.screenshot({ path: `${shots}/6-english.png`, fullPage: true })
@@ -233,6 +357,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       ['stories', 'Stories'],
       ['stories/new', 'New recording'],
       ['speakers', 'Speakers'],
+      [storyPath, TITLE],
     ]) {
       await page.goto(`${BASE}/ain/${path}`)
       await page

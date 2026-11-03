@@ -4,13 +4,25 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { validateStrict } from '../../lib/validation'
 import {
+  AddTranscriptRequest,
   CompleteRecordingRequest,
   CreateConsentRequest,
   CreateRecordingRequest,
   CreateSpeakerRequest,
+  SplitSegmentRequest,
   UpdateRecordingRequest,
+  UpdateSegmentRequest,
   UpdateSpeakerRequest,
 } from './schemas'
+import {
+  addTranscript,
+  detectSegments,
+  listSegments,
+  listTranscriptVersions,
+  mergeSegment,
+  splitSegment,
+  updateSegment,
+} from './segments'
 import {
   addConsent,
   createSpeaker,
@@ -30,7 +42,7 @@ import {
   uploadChunk,
 } from './recordings'
 
-// Speakers and recordings, mounted at /api/v1/community. Everything here
+// Speakers, recordings and their transcripts, mounted at /api/v1/community. Everything here
 // needs a signed-in user with a profile, even when CV_REQUIRE_LOGIN is off.
 const requireSignedIn = (
   request: Request,
@@ -44,7 +56,7 @@ const requireSignedIn = (
 }
 
 export default PromiseRouter({ mergeParams: true })
-  .use(['/speakers', '/recordings'], requireSignedIn)
+  .use(['/speakers', '/recordings', '/segments'], requireSignedIn)
   .get('/speakers', listSpeakers)
   .post(
     '/speakers',
@@ -89,3 +101,22 @@ export default PromiseRouter({ mergeParams: true })
     completeRecording
   )
   .get('/recordings/:recordingId(\\d+)/audio', getRecordingAudio)
+  .get('/recordings/:recordingId(\\d+)/segments', listSegments)
+  .post('/recordings/:recordingId(\\d+)/segments/detect', detectSegments)
+  .patch(
+    '/segments/:segmentId(\\d+)',
+    validateStrict({ body: UpdateSegmentRequest }),
+    updateSegment
+  )
+  .post(
+    '/segments/:segmentId(\\d+)/split',
+    validateStrict({ body: SplitSegmentRequest }),
+    splitSegment
+  )
+  .post('/segments/:segmentId(\\d+)/merge', mergeSegment)
+  .get('/segments/:segmentId(\\d+)/transcripts', listTranscriptVersions)
+  .post(
+    '/segments/:segmentId(\\d+)/transcripts',
+    validateStrict({ body: AddTranscriptRequest }),
+    addTranscript
+  )

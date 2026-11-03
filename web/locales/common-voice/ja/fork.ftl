@@ -35,6 +35,8 @@ fork-stories-status-uploading = アップロード未完了
 fork-stories-status-processing = 処理中…
 fork-stories-status-failed = 処理に失敗しました
 fork-stories-download-original = 元のファイルをダウンロード
+fork-stories-transcribe = 書き起こし・翻訳
+fork-stories-progress = 区間 { $segments } · 書き起こし済み { $transcribed } · 日本語訳済み { $translated }
 fork-stories-save-partial = アップロード済みの部分を保存する
 fork-stories-resume-upload = 同じファイルを選び直すとアップロードを再開できます
 
@@ -114,6 +116,35 @@ fork-consent-notes = メモ
 fork-consent-save = 同意を保存
 fork-consent-withdraw = 同意を撤回
 fork-consent-withdraw-confirm = この同意を撤回しますか？再び同意が記録されるまで、この話者の新しい録音はできなくなります。
+
+## Transcribing a recording
+fork-transcribe-back-to-stories = ← 語りの一覧へ
+fork-transcribe-play = 再生
+fork-transcribe-pause = 一時停止
+fork-transcribe-play-segment = 区間 { $number } を再生
+fork-transcribe-back = { $seconds }秒戻る
+fork-transcribe-forward = { $seconds }秒進む
+fork-transcribe-speed = 速度
+fork-transcribe-loop = 区間をくり返す
+fork-transcribe-help = 区間の ▶ を押すと、その区間を再生して終わりで止まります。入力中は Esc キーで再生・一時停止できます。「ここで分割」と「終わりをここに」は再生位置を使います。
+fork-transcribe-speaker = 話者
+fork-transcribe-speaker-unset = （未設定）
+fork-transcribe-transcription = 書き起こし
+fork-transcribe-script = 表記
+fork-transcribe-script-latin = ラテン文字
+fork-transcribe-script-katakana = カタカナ
+fork-transcribe-script-mixed = 混在
+fork-transcribe-translation-ja = 日本語訳
+fork-transcribe-translation-en = 英訳
+fork-transcribe-add-english = ＋ 英訳を追加
+fork-transcribe-saved = 保存しました
+fork-transcribe-conflict = 「{ $field }」は、ほかの人が先に保存しました：「{ $text }」。あなたの入力はそのまま残っています。もう一度保存すると置き換わります。
+fork-transcribe-split = ここで分割
+fork-transcribe-end-here = 終わりをここに
+fork-transcribe-merge = 次と結合
+fork-transcribe-no-segments = この録音にはまだ区間がありません。
+fork-transcribe-detect = 区間を自動で検出する
+fork-transcribe-detecting = 区間を検出しています…長い録音は時間がかかります。
 
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ

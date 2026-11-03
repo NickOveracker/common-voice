@@ -6,6 +6,7 @@ import { hasRole } from '../roles'
 import { canManageSpeaker, currentConsents } from './speakers'
 import { chunkPath, getAudioUrl, putObject } from './storage'
 import { queueRecordingProcessing } from './processing'
+import { segmentProgress } from './segments'
 import { withTransaction } from './transaction'
 
 // Long recordings (stories, interviews, conversations). Audio is sent in
@@ -103,7 +104,8 @@ async function speakersByRecording(
 async function presentRecording(
   user: SessionUser,
   row: RecordingRow,
-  speakers: { id: number; display_name: string }[]
+  speakers: { id: number; display_name: string }[],
+  progress: { segments: number; transcribed: number; translated_ja: number }
 ) {
   return {
     id: row.id,
@@ -122,6 +124,7 @@ async function presentRecording(
     is_mine: row.created_by === user.client_id,
     can_manage: await canManageRecording(user, row),
     error: row.status === 'failed' ? row.error : null,
+    progress: progress ?? { segments: 0, transcribed: 0, translated_ja: 0 },
   }
 }
 
@@ -138,13 +141,18 @@ export const listRecordings = async (request: Request, response: Response) => {
     `,
     [mine ? 1 : 0, user.client_id, user.client_id]
   )
-  const speakers = await speakersByRecording(
-    rows.map((row: RecordingRow) => row.id)
-  )
+  const ids = rows.map((row: RecordingRow) => row.id)
+  const speakers = await speakersByRecording(ids)
+  const progress = await segmentProgress(ids)
   response.json(
     await Promise.all(
       rows.map((row: RecordingRow) =>
-        presentRecording(user, row, speakers.get(row.id) ?? [])
+        presentRecording(
+          user,
+          row,
+          speakers.get(row.id) ?? [],
+          progress.get(row.id)
+        )
       )
     )
   )
@@ -164,7 +172,8 @@ export const getRecording = async (request: Request, response: Response) => {
     ...(await presentRecording(
       user,
       recording,
-      speakers.get(recording.id) ?? []
+      speakers.get(recording.id) ?? [],
+      (await segmentProgress([recording.id])).get(recording.id)
     )),
     // Lets an interrupted upload continue where it stopped
     uploaded_chunks:

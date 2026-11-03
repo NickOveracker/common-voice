@@ -122,3 +122,57 @@ export const CompleteRecordingRequest: AllowedSchema = {
     chunk_count: { type: 'integer', minimum: 1 },
   },
 }
+
+export const TRANSCRIPT_KINDS = [
+  'transcription',
+  'translation_ja',
+  'translation_en',
+] as const
+
+// Writing systems used for Ainu
+export const TRANSCRIPT_SCRIPTS = ['latin', 'katakana', 'mixed'] as const
+
+export const UpdateSegmentRequest: AllowedSchema = {
+  type: 'object',
+  additionalProperties: false,
+  minProperties: 1,
+  properties: {
+    speaker_id: { type: ['integer', 'null'], minimum: 1 },
+    // null: as the recording
+    languages: {
+      type: ['array', 'null'],
+      minItems: 1,
+      uniqueItems: true,
+      items: { type: 'string', enum: [...RECORDING_LANGUAGES] },
+    },
+    // Moves the boundary with the next segment
+    end_ms: { type: 'integer', minimum: 1 },
+  },
+}
+
+export const SplitSegmentRequest: AllowedSchema = {
+  type: 'object',
+  required: ['at_ms'],
+  additionalProperties: false,
+  properties: {
+    at_ms: { type: 'integer', minimum: 1 },
+  },
+}
+
+export const AddTranscriptRequest: AllowedSchema = {
+  type: 'object',
+  required: ['kind', 'text', 'base_id'],
+  additionalProperties: false,
+  properties: {
+    kind: { type: 'string', enum: [...TRANSCRIPT_KINDS] },
+    // Empty clears it
+    text: { type: 'string', maxLength: 5000 },
+    script: {
+      type: ['string', 'null'],
+      enum: [...TRANSCRIPT_SCRIPTS, null],
+    },
+    // The version this edit started from (null if there was none), so that
+    // two people editing at once don't overwrite each other unseen
+    base_id: { type: ['integer', 'null'] },
+  },
+}

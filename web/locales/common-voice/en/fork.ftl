@@ -35,6 +35,8 @@ fork-stories-status-uploading = Upload not finished
 fork-stories-status-processing = Processing…
 fork-stories-status-failed = Processing failed
 fork-stories-download-original = Download original
+fork-stories-transcribe = Transcribe and translate
+fork-stories-progress = { $segments } segments · { $transcribed } transcribed · { $translated } translated into Japanese
 fork-stories-save-partial = Save the part that was uploaded
 fork-stories-resume-upload = Choose the file again to resume the upload
 
@@ -114,6 +116,35 @@ fork-consent-notes = Notes
 fork-consent-save = Save consent
 fork-consent-withdraw = Withdraw consent
 fork-consent-withdraw-confirm = Withdraw this consent? New recordings of this speaker won't be possible until consent is recorded again.
+
+## Transcribing a recording
+fork-transcribe-back-to-stories = ← All stories
+fork-transcribe-play = Play
+fork-transcribe-pause = Pause
+fork-transcribe-play-segment = Play segment { $number }
+fork-transcribe-back = −{ $seconds } s
+fork-transcribe-forward = +{ $seconds } s
+fork-transcribe-speed = Speed
+fork-transcribe-loop = Repeat the segment
+fork-transcribe-help = ▶ on a segment plays it and stops at its end. While typing, Esc plays or pauses the segment. “Split here” and “End here” use the playback position.
+fork-transcribe-speaker = Speaker
+fork-transcribe-speaker-unset = (not set)
+fork-transcribe-transcription = Transcription
+fork-transcribe-script = Writing
+fork-transcribe-script-latin = Latin letters
+fork-transcribe-script-katakana = Katakana
+fork-transcribe-script-mixed = Mixed
+fork-transcribe-translation-ja = Japanese translation
+fork-transcribe-translation-en = English translation
+fork-transcribe-add-english = + Add an English translation
+fork-transcribe-saved = Saved
+fork-transcribe-conflict = Someone else saved “{ $field }” first: “{ $text }”. Your text is still in the box; saving again replaces theirs.
+fork-transcribe-split = Split here
+fork-transcribe-end-here = End here
+fork-transcribe-merge = Merge with next
+fork-transcribe-no-segments = This recording has no segments yet.
+fork-transcribe-detect = Find segments automatically
+fork-transcribe-detecting = Finding segments… Long recordings take a while.
 
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive

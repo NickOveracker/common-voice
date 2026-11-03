@@ -2,5 +2,7 @@
 export default Object.freeze({
   STORIES: '/stories',
   STORIES_NEW: '/stories/new',
+  // Followed by the recording's id
+  STORY: '/stories/',
   SPEAKERS: '/speakers',
 })

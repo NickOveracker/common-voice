@@ -65,6 +65,7 @@ export type Recording = {
   can_manage: boolean
   error: string | null
   uploaded_chunks?: number[]
+  progress: { segments: number; transcribed: number; translated_ja: number }
 }
 
 export type NewRecording = {
@@ -80,7 +81,12 @@ export type NewRecording = {
 }
 
 export class StoriesApiError extends Error {
-  constructor(readonly status: number, message: string) {
+  constructor(
+    readonly status: number,
+    message: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    readonly body: any = null
+  ) {
     super(message)
   }
 }
@@ -109,7 +115,8 @@ async function request<T>(
     const error = await response.json().catch((): null => null)
     throw new StoriesApiError(
       response.status,
-      error?.message ?? response.statusText
+      error?.message ?? response.statusText,
+      error
     )
   }
   return response.status === 204 || response.status === 202
@@ -145,3 +152,60 @@ export const completeRecording = (recordingId: number, chunkCount: number) =>
   })
 export const recordingAudioUrl = (id: number, original = false) =>
   `${BASE}/recordings/${id}/audio${original ? '?original=true' : ''}`
+
+export const TRANSCRIPT_KINDS = [
+  'transcription',
+  'translation_ja',
+  'translation_en',
+] as const
+export type TranscriptKind = typeof TRANSCRIPT_KINDS[number]
+
+export const TRANSCRIPT_SCRIPTS = ['latin', 'katakana', 'mixed'] as const
+export type TranscriptScript = typeof TRANSCRIPT_SCRIPTS[number]
+
+export type Transcript = {
+  id: number
+  text: string
+  script: TranscriptScript | null
+  created_at: string
+  is_mine: boolean
+}
+
+export type Segment = {
+  id: number
+  start_ms: number
+  end_ms: number
+  speaker_id: number | null
+  // null: as the recording
+  languages: RecordingLanguage[] | null
+} & Record<TranscriptKind, Transcript | null>
+
+export const listSegments = (recordingId: number) =>
+  request<Segment[]>('GET', `/recordings/${recordingId}/segments`)
+export const detectSegments = (recordingId: number) =>
+  request<null>('POST', `/recordings/${recordingId}/segments/detect`)
+export const updateSegment = (
+  id: number,
+  changes: {
+    speaker_id?: number | null
+    languages?: RecordingLanguage[] | null
+    end_ms?: number
+  }
+) => request<Segment[]>('PATCH', `/segments/${id}`, changes)
+export const splitSegment = (id: number, atMs: number) =>
+  request<Segment[]>('POST', `/segments/${id}/split`, { at_ms: atMs })
+export const mergeSegment = (id: number) =>
+  request<Segment[]>('POST', `/segments/${id}/merge`)
+
+// Throws StoriesApiError 409 with body.current when someone else saved a
+// version since baseId
+export const addTranscript = (
+  segmentId: number,
+  transcript: {
+    kind: TranscriptKind
+    text: string
+    script?: TranscriptScript | null
+    base_id: number | null
+  }
+) =>
+  request<Transcript>('POST', `/segments/${segmentId}/transcripts`, transcript)

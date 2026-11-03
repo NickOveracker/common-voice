@@ -109,3 +109,129 @@
   padding-inline-start: 1rem;
   font-size: var(--font-size-sm);
 }
+
+.fork-stories__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Transcribing a recording */
+
+.fork-transcribe__back {
+  min-width: 0;
+  display: inline-flex;
+  margin-block-end: 1rem;
+}
+
+.fork-transcribe__player {
+  position: sticky;
+  /* --header-height is less than the header's real height */
+  top: calc(var(--header-height) + 0.75rem);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem 0;
+  background: var(--white);
+  border-block-end: 1px solid var(--light-grey, #e7e5e2);
+}
+
+/* Compact on every screen: upstream makes buttons full width on phones,
+   which would make this sticky bar cover much of the screen */
+.fork-transcribe__player .button,
+.fork-transcribe__tools .button {
+  min-width: 0;
+  width: auto;
+  height: 2.5rem;
+  padding-inline: 1rem;
+}
+
+.fork-transcribe__player .labeled-form-control {
+  width: 7rem;
+}
+
+.fork-transcribe__time {
+  font-variant-numeric: tabular-nums;
+  min-width: 8rem;
+}
+
+.fork-transcribe__segments {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.fork-transcribe__segment {
+  border: 1px solid var(--light-grey, #e7e5e2);
+  border-inline-start-width: 4px;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* The segment at the playback position */
+.fork-transcribe__segment--active {
+  border-inline-start-color: var(--blue, #3d6bff);
+}
+
+.fork-transcribe__segment-head,
+.fork-transcribe__actions,
+.fork-transcribe__tools,
+.fork-transcribe__languages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.fork-transcribe__segment-head .labeled-form-control {
+  width: 12rem;
+}
+
+.fork-transcribe .button {
+  min-width: 0;
+}
+
+.fork-transcribe__play.button {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+}
+
+.fork-transcribe__range {
+  font-variant-numeric: tabular-nums;
+  color: var(--warm-grey, #959595);
+  min-width: 10rem;
+}
+
+.fork-transcribe__texts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem;
+}
+
+.fork-transcribe__text {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fork-transcribe__link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--blue, #3d6bff);
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+  align-self: start;
+}
+
+.fork-transcribe__tools {
+  margin-inline-start: auto;
+}

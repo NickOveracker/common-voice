@@ -17,3 +17,11 @@ export function contiguousChunkCount(uploaded: number[]): number {
   while (set.has(count)) count++
   return count
 }
+
+// Position in a recording, to a tenth of a second: 1:02.3
+export function formatTime(ms: number): string {
+  const tenths = Math.floor(ms / 100)
+  const minutes = Math.floor(tenths / 600)
+  const seconds = ((tenths % 600) / 10).toFixed(1).padStart(4, '0')
+  return `${minutes}:${seconds}`
+}

@@ -102,6 +102,32 @@ Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
   and `ffprobe`). Recording date can be a year, month or day; location is
   optional.
 
+## Segments, transcription and translation
+
+`server/src/fork/stories/segments.ts` and `segmentation.ts`; page
+`web/src/fork/stories/recording-page.tsx` at `/<locale>/stories/<id>`.
+
+- A recording is divided into consecutive segments with no gaps. After
+  processing, ffmpeg finds pauses (`silencedetect`, with the threshold set
+  12 dB below the recording's mean loudness so hissy tapes still work) and
+  `planSegments()` cuts at the first pause after 3 s, or the longest one
+  before 30 s. With a single speaker, segments start out as theirs.
+  `POST /recordings/:id/segments/detect` starts over (only before anything
+  is transcribed, by whoever manages the recording).
+- Anyone signed in can split a segment, merge it with the next, move the
+  boundary between them, and set its speaker and languages
+  (`PATCH|POST /segments/:id…`). Edits to one recording are serialised by
+  locking its row.
+- Each segment has a transcription (with its writing: Latin, katakana or
+  mixed), a Japanese translation and an optional English one, in
+  `fork_transcripts`. Every save adds a version (`GET
+  /segments/:id/transcripts?kind=` lists them). A save names the version it
+  started from; if someone else saved since, it gets 409 and the other text,
+  and saving again replaces it knowingly.
+- The page plays a segment and stops at its end (or loops it), skips 5 s,
+  and slows down to 0.5×. Esc plays or pauses the segment being typed in,
+  except while an input method is composing.
+
 ## Tests
 
 Fork unit tests run with the normal test suites. The integration test

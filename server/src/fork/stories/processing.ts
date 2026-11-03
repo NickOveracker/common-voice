@@ -13,6 +13,8 @@ import {
   playbackPath,
   putStream,
 } from './storage'
+import { detectPauses, planSegments } from './segmentation'
+import { withTransaction } from './transaction'
 
 // Joins the uploaded chunks of a recording, keeps the joined file as the
 // original, and makes an MP3 copy for playback. Recordings can be hours long,
@@ -20,6 +22,7 @@ import {
 
 const QUEUE_NAME = 'fork-recording-processing'
 const JOB_NAME = 'process-recording'
+const DETECT_JOB_NAME = 'detect-segments'
 
 const db = getMySQLInstance()
 
@@ -31,6 +34,9 @@ export function setupRecordingProcessingQueue() {
   queue = getQueue<ProcessRecordingJob>(QUEUE_NAME)()
   // One at a time: transcoding long recordings is CPU heavy
   queue.process(JOB_NAME, 1, job => processRecording(job.data.recordingId))
+  queue.process(DETECT_JOB_NAME, 1, job =>
+    detectSegmentsAgain(job.data.recordingId)
+  )
   queue.on('failed', (job, error) =>
     console.error(
       `[recordings] processing ${job.data.recordingId} failed`,
@@ -43,6 +49,15 @@ export async function queueRecordingProcessing(recordingId: number) {
   if (!queue) throw new Error('recording processing queue is not set up')
   await queue.add(
     JOB_NAME,
+    { recordingId },
+    { attempts: 3, backoff: { type: 'exponential', delay: 60_000 } }
+  )
+}
+
+export async function queueSegmentDetection(recordingId: number) {
+  if (!queue) throw new Error('recording processing queue is not set up')
+  await queue.add(
+    DETECT_JOB_NAME,
     { recordingId },
     { attempts: 3, backoff: { type: 'exponential', delay: 60_000 } }
   )
@@ -132,6 +147,11 @@ export async function processRecording(recordingId: number) {
 
     await transcodeForPlayback(original, playback)
     const duration = await durationMs(playback)
+    // Segments only help transcription: the recording is usable without
+    // them, and they can be detected again later
+    await saveDetectedSegments(recordingId, playback, duration).catch(error =>
+      console.error(`[recordings] segments for ${recordingId}`, error)
+    )
 
     await putStream(originalPath(recordingId), fs.createReadStream(original))
     await putStream(playbackPath(recordingId), fs.createReadStream(playback))
@@ -163,6 +183,59 @@ export async function processRecording(recordingId: number) {
       [String(error?.message ?? error).slice(0, 5000), recordingId]
     )
     throw error
+  } finally {
+    await fs.promises.rm(dir, { recursive: true, force: true })
+  }
+}
+
+// Saves segments found from pauses, unless the recording has segments
+// already.
+async function saveDetectedSegments(
+  recordingId: number,
+  file: string,
+  duration: number
+) {
+  const segments = planSegments(duration, await detectPauses(file))
+  if (segments.length === 0) return
+  await withTransaction(async connection => {
+    await connection.query(
+      `SELECT id FROM fork_recordings WHERE id = ? FOR UPDATE`,
+      [recordingId]
+    )
+    const [[{ count }]] = await connection.query(
+      `SELECT COUNT(*) AS count FROM fork_segments WHERE recording_id = ?`,
+      [recordingId]
+    )
+    if (count > 0) return
+    // With only one speaker, every segment is theirs
+    const [speakers] = await connection.query(
+      `SELECT speaker_id FROM fork_recording_speakers WHERE recording_id = ?`,
+      [recordingId]
+    )
+    const speakerId = speakers.length === 1 ? speakers[0].speaker_id : null
+    await connection.query(
+      `INSERT INTO fork_segments (recording_id, start_ms, end_ms, speaker_id) VALUES ?`,
+      [segments.map(s => [recordingId, s.start_ms, s.end_ms, speakerId])]
+    )
+  })
+}
+
+// For recordings processed before segments existed, or to start over
+export async function detectSegmentsAgain(recordingId: number) {
+  const [[recording]] = await db.query(
+    `SELECT playback_path, duration_ms FROM fork_recordings WHERE id = ? AND status = 'ready'`,
+    [recordingId]
+  )
+  if (!recording) return
+
+  const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'segments-'))
+  const playback = path.join(dir, 'playback.mp3')
+  try {
+    await fs.promises.writeFile(
+      playback,
+      await getObject(recording.playback_path)
+    )
+    await saveDetectedSegments(recordingId, playback, recording.duration_ms)
   } finally {
     await fs.promises.rm(dir, { recursive: true, force: true })
   }

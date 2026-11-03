@@ -9,6 +9,7 @@ import {
   LinkButton,
   Spinner,
 } from '../../components/ui/ui'
+import { LocaleLink } from '../../components/locale-helpers'
 import FORK_URLS from '../urls'
 import {
   completeRecording,
@@ -97,7 +98,15 @@ const RecordingCard = ({
   onChange: () => void
 }) => (
   <li className="fork-stories__card">
-    <h2>{recording.title}</h2>
+    <h2>
+      {recording.status === 'ready' ? (
+        <LocaleLink to={FORK_URLS.STORY + recording.id}>
+          {recording.title}
+        </LocaleLink>
+      ) : (
+        recording.title
+      )}
+    </h2>
     <p className="fork-stories__meta">
       {recording.speakers.map(speaker => speaker.display_name).join(', ')}
       {' · '}
@@ -137,17 +146,33 @@ const RecordingCard = ({
 
     {recording.status === 'ready' && (
       <>
+        {recording.progress.segments > 0 && (
+          <Localized
+            id="fork-stories-progress"
+            vars={{
+              segments: recording.progress.segments,
+              transcribed: recording.progress.transcribed,
+              translated: recording.progress.translated_ja,
+            }}>
+            <p className="fork-stories__meta" />
+          </Localized>
+        )}
         <audio
           controls
           preload="none"
           src={recordingAudioUrl(recording.id)}
           className="fork-stories__audio"
         />
-        {recording.can_manage && (
-          <Localized id="fork-stories-download-original">
-            <a href={recordingAudioUrl(recording.id, true)} />
+        <div className="fork-stories__card-actions">
+          <Localized id="fork-stories-transcribe">
+            <LinkButton rounded outline to={FORK_URLS.STORY + recording.id} />
           </Localized>
-        )}
+          {recording.can_manage && (
+            <Localized id="fork-stories-download-original">
+              <a href={recordingAudioUrl(recording.id, true)} />
+            </Localized>
+          )}
+        </div>
       </>
     )}
     {recording.status === 'processing' && (

@@ -437,6 +437,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     )
     log('facilitator made them a reviewer on the admin page')
 
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.screenshot({ path: `${shots}/8-admin.png`, fullPage: true })
+
     // The admin merges the two dialect entries
     const kanjiEntry = page.locator('.fork-dialects__entry', {
       has: page.locator(`input[value="${DIALECT_KANJI}"]`),
@@ -450,6 +453,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       has: page.locator(`input[value="${DIALECT_LATIN}"]`),
     })
     await latinEntry.locator(`text=別名：${DIALECT_KANJI}`).waitFor()
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: `${shots}/8b-dialects.png`, fullPage: true })
     await page.goto(`${BASE}/ain/stories`)
     const merged = await page
@@ -461,7 +465,6 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     if (!merged.includes(DIALECT_LATIN) || merged.includes(DIALECT_KANJI)) {
       throw new Error('merge did not move the recording')
     }
-    await page.screenshot({ path: `${shots}/8-admin.png`, fullPage: true })
 
     await reviewer.goto(storyUrl)
     const reviewed = reviewer.locator('.fork-transcribe__segment').first()

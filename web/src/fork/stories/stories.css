@@ -1,0 +1,97 @@
+.fork-stories .page-heading {
+  margin-block-end: 1.5rem;
+}
+
+.fork-stories__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block: 1rem;
+}
+
+.fork-stories__filter {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.fork-stories__list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.fork-stories__card {
+  border: 1px solid var(--light-grey, #e7e5e2);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: var(--white, #fff);
+}
+
+.fork-stories__card h2 {
+  font-size: var(--font-size-md);
+  margin: 0 0 0.25rem;
+}
+
+.fork-stories__meta,
+.fork-stories__hint,
+.fork-stories__status {
+  color: var(--warm-grey, #959595);
+  font-size: var(--font-size-sm);
+}
+
+.fork-stories__error {
+  color: var(--red, #ff4f5e);
+}
+
+.fork-stories__audio {
+  display: block;
+  width: 100%;
+  margin-block: 0.5rem;
+}
+
+.fork-stories__form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+  margin-block: 1.5rem;
+}
+
+.fork-stories__form fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fork-stories__form legend {
+  font-weight: 600;
+  margin-block-end: 0.5rem;
+}
+
+.fork-stories__recorder,
+.fork-stories__upload,
+.fork-stories__details {
+  display: grid;
+  gap: 0.75rem;
+  margin-block: 1rem;
+}
+
+.fork-stories__timer {
+  font-size: var(--font-size-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.fork-stories__upload progress {
+  width: 100%;
+}
+
+.fork-stories__consent {
+  margin: 0.25rem 0 0;
+  padding-inline-start: 1rem;
+  font-size: var(--font-size-sm);
+}

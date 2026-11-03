@@ -1,5 +1,6 @@
 import { menuItems } from '../components/layout/nav/menu-items'
 import URLS from '../urls'
+import FORK_URLS from './urls'
 
 const loadVisibleMenuItems = (privateInstance: boolean) => {
   process.env.CV_PRIVATE_INSTANCE = privateInstance ? 'true' : ''
@@ -27,7 +28,10 @@ describe('visibleMenuItems', () => {
     expect(items.some(item => item.externalHref)).toBe(false)
     expect(items.map(item => item.internalHref)).toEqual([
       URLS.SPEAK,
+      FORK_URLS.STORIES_NEW,
+      FORK_URLS.SPEAKERS,
       URLS.LISTEN,
+      FORK_URLS.STORIES,
       URLS.WRITE,
       URLS.REVIEW,
     ])

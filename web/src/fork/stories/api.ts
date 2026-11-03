@@ -129,10 +129,7 @@ export const addConsent = (
   consent: Omit<Consent, 'id' | 'created_at' | 'withdrawn_at'>
 ) => request<{ id: number }>('POST', `/speakers/${speakerId}/consents`, consent)
 export const withdrawConsent = (speakerId: number, consentId: number) =>
-  request<null>(
-    'POST',
-    `/speakers/${speakerId}/consents/${consentId}/withdraw`
-  )
+  request<null>('POST', `/speakers/${speakerId}/consents/${consentId}/withdraw`)
 
 export const listRecordings = (mine = false) =>
   request<Recording[]>('GET', `/recordings${mine ? '?mine=true' : ''}`)

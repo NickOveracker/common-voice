@@ -51,6 +51,10 @@ export type ForkConfig = {
   SMTP_URL: string
   // Largest recording that can be uploaded, in bytes.
   RECORDING_MAX_BYTES: number
+  // Turn off upstream features that send people's data to Mozilla's
+  // services, such as the newsletter sign-up. The web build reads the same
+  // variable.
+  PRIVATE_INSTANCE: boolean
 }
 
 let forkConfig: ForkConfig
@@ -77,6 +81,7 @@ export function getForkConfig(): ForkConfig {
       PRIVATE_STORAGE: configEntry('CV_PRIVATE_STORAGE', false, castBoolean),
       PUBLIC_URL: configEntry('CV_PUBLIC_URL', '', castString),
       SMTP_URL: configEntry('CV_SMTP_URL', '', castString),
+      PRIVATE_INSTANCE: configEntry('CV_PRIVATE_INSTANCE', false, castBoolean),
       RECORDING_MAX_BYTES: configEntry(
         'CV_RECORDING_MAX_BYTES',
         4 * 1024 ** 3,

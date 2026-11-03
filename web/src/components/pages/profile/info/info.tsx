@@ -37,7 +37,14 @@ import { UserLanguage } from 'common'
 import ProfileInfoLanguages from './languages/languages'
 import ExpandableInformation from '../../../expandable-information/expandable-information'
 
+import { IS_PRIVATE_INSTANCE } from '../../../../fork/config'
+import { hiddenOnPrivateInstance } from '../../../../fork/hidden-on-private-instance'
+
 import './info.css'
+
+// Mozilla's newsletter, and a link to a Mozilla blog post
+const NewsletterCheckbox = hiddenOnPrivateInstance(LabeledCheckbox)
+const GenderHelp = hiddenOnPrivateInstance(ExpandableInformation)
 
 function ProfileInfo({
   getString,
@@ -133,7 +140,7 @@ function ProfileInfo({
     if (!user.account) {
       trackProfile('create', locale)
 
-      if (termsStatus == null) {
+      if (termsStatus == null && !IS_PRIVATE_INSTANCE) {
         setTermsStatus('show')
         return
       }
@@ -208,12 +215,18 @@ function ProfileInfo({
         </Localized>
       )}
 
-      <Localized id="why-profile-text">
+      <Localized
+        id={IS_PRIVATE_INSTANCE ? 'fork-why-profile-text' : 'why-profile-text'}>
         <p />
       </Localized>
 
       <ExpandableInformation summaryLocalizedId="why-demographic">
-        <Localized id="why-demographic-explanation-2">
+        <Localized
+          id={
+            IS_PRIVATE_INSTANCE
+              ? 'fork-why-demographic-explanation'
+              : 'why-demographic-explanation-2'
+          }>
           <div />
         </Localized>
       </ExpandableInformation>
@@ -263,7 +276,7 @@ function ProfileInfo({
         </Localized>
       </div>
 
-      <ExpandableInformation summaryLocalizedId="help-sex-or-gender-changes">
+      <GenderHelp summaryLocalizedId="help-sex-or-gender-changes">
         <Localized
           id="help-sex-or-gender-changes-explanation"
           elems={{
@@ -278,7 +291,7 @@ function ProfileInfo({
           }}>
           <div />
         </Localized>
-      </ExpandableInformation>
+      </GenderHelp>
 
       <ProfileInfoLanguages
         userLanguages={userLanguages}
@@ -302,7 +315,7 @@ function ProfileInfo({
             </Tooltip>
 
             <div className="checkboxes">
-              <LabeledCheckbox
+              <NewsletterCheckbox
                 label={
                   <>
                     <Localized id="email-opt-in-info-title">
@@ -326,9 +339,14 @@ function ProfileInfo({
                       <strong />
                     </Localized>
                     <Localized
-                      id="accept-privacy"
+                      id={
+                        IS_PRIVATE_INSTANCE
+                          ? 'fork-accept-privacy-and-terms'
+                          : 'accept-privacy'
+                      }
                       elems={{
                         privacyLink: <LocaleLink to={URLS.PRIVACY} blank />,
+                        termsLink: <LocaleLink to={URLS.TERMS} blank />,
                       }}>
                       <span />
                     </Localized>

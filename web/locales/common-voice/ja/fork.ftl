@@ -114,3 +114,12 @@ fork-consent-notes = メモ
 fork-consent-save = 同意を保存
 fork-consent-withdraw = 同意を撤回
 fork-consent-withdraw-confirm = この同意を撤回しますか？再び同意が記録されるまで、この話者の新しい録音はできなくなります。
+
+## Site name, shown as plain text in place of the Common Voice logo
+fork-site-name = アイヌ語音声アーカイブ
+
+## Profile
+fork-why-profile-text = プロフィールの情報は、あなたが提供する録音を説明するために役立ちます。必要なのはユーザー名だけで、ほかの項目はすべて任意です。
+fork-why-demographic-explanation = 年齢と性別は、ご自身の録音を説明するための情報です。録音とともにアーカイブに保存されますが、あなたの名前と並べて表示されることはありません。ユーザー名は、表示する設定にした場合にのみ他のメンバーに表示されます。
+fork-accept-privacy-and-terms = <termsLink>利用規約</termsLink>に同意し、<privacyLink>プライバシーに関するお知らせ</privacyLink>に記載のとおり私の情報が取り扱われることに同意します。
+fork-email-change-information = メールアドレスを変更するには、<emailFragment>{ $email }</emailFragment> までご連絡ください。

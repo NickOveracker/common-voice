@@ -38,7 +38,7 @@ migrations that are older than ours. Fork migrations are named
 |---|---|
 | `server/src/server.ts` | Static locale import instead of Pontoon; configurable robots.txt; recording processing queue |
 | `server/src/lib/model.ts` | Skip Pontoon translation statistics with static locales |
-| `server/src/lib/api.ts` | `requireLoginMiddleware` after `authMiddleware`; `/community` router; only default avatars with `CV_PRIVATE_STORAGE` |
+| `server/src/lib/api.ts` | `requireLoginMiddleware` and `disabledRoutesMiddleware` (Mozilla newsletter off with `CV_PRIVATE_INSTANCE`) after `authMiddleware`; `/community` router; only default avatars with `CV_PRIVATE_STORAGE` |
 | `server/src/auth-router.ts` | Ignore anonymous (Basic auth) clients when login is required; only allow same-site `?redirect=` after sign-in |
 | `server/src/infrastructure/storage/storage.ts` | `makePublic` does nothing with `CV_PRIVATE_STORAGE` |
 | `server/src/infrastructure/authentication/authentication.ts` | Production URL from `CV_PUBLIC_URL` |
@@ -51,7 +51,7 @@ migrations that are older than ours. Fork migrations are named
 | `web/src/services/tracker-ga4.ts` | Don't call `gtag` when analytics isn't loaded |
 | `web/src/components/layout/non-production-banner.tsx` | Hidden on private instances |
 | `web/src/main.ts` | Import `fork/fonts.css` |
-| `web/src/components/layout/layout.tsx` | Sign-in gate around page content; private footer; `LanguageSelect` imported from `fork/header-language-select` |
+| `web/src/components/layout/layout.tsx` | Sign-in gate around page content; private footer; `LanguageSelect` imported from `fork/header-language-select`; `Logo` imported from `fork/logo` (site name as plain text, also the page title) |
 | `web/src/components/languages-provider.tsx` | URL locale and interface language kept apart via `fork/interface-locale` |
 | `web/src/components/localization-select/language-select.tsx` | No "request a language" link on private instances |
 | `web/src/services/api.ts` | Privacy/terms fetched in the interface language |
@@ -59,6 +59,9 @@ migrations that are older than ours. Fork migrations are named
 | `web/src/components/layout/nav/nav.tsx` | Menus filtered by `visibleMenuItems()` |
 | `web/src/components/pages/profile/layout.tsx` | Avatar tab hidden on private instances |
 | `web/src/components/pages/profile/delete/delete.tsx` | Deletion requests go to `CV_CONTACT_EMAIL` |
+| `web/src/components/pages/profile/info/info.tsx` | On private instances: no Mozilla newsletter checkbox or gender blog link (`hiddenOnPrivateInstance`), the community's privacy and terms wording, no separate terms dialog |
+| `web/src/components/pages/profile/info/languages/languages.tsx` | No "request a language" link on private instances |
+| `web/src/components/pages/profile/settings/settings.tsx` | Email change requests go to `CV_CONTACT_EMAIL` |
 
 ## Interface language and contribution language
 
@@ -141,3 +144,8 @@ merging upstream. `scripts/fork-e2e/run.sh --clean` removes the containers.
 ## Settings
 
 See `.env-private.example`.
+
+To hide an upstream element on private instances without re-indenting the
+upstream file, swap its tag for `hiddenOnPrivateInstance(Component)` from
+`web/src/fork/hidden-on-private-instance.ts`. The site name shown in the
+header is the `fork-site-name` string in `fork.ftl`.

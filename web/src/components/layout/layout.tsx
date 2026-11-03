@@ -21,7 +21,7 @@ import Content from './content'
 import Footer from './footer'
 // Fork: switches the interface language only on private instances
 import LanguageSelect from '../../fork/header-language-select'
-import Logo from './logo'
+import Logo from '../../fork/logo'
 import Nav from './nav/nav'
 import UserMenu from './user-menu'
 import cx from 'classnames'

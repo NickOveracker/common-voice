@@ -76,7 +76,7 @@ docker run -d --name cvfork-web --network "$NET" "${USER_ARGS[@]}" -v "$REPO":/c
   -e CV_SECRET="e2e-$(openssl rand -hex 16)" -e CV_JWT_KEY="e2e-$(openssl rand -hex 16)" \
   -e CV_LOCALES=en,ja,ain -e CV_CONTRIBUTABLE_LOCALES=ain \
   -e CV_REQUIRE_LOGIN=true -e CV_ROBOTS_DISALLOW_ALL=true \
-  -e CV_STRICT_CSP=true -e CV_PRIVATE_STORAGE=true \
+  -e CV_STRICT_CSP=true -e CV_PRIVATE_STORAGE=true -e CV_PRIVATE_INSTANCE=true \
   -e CV_ADMIN_EMAILS=facilitator@example.org \
   "$NODE_IMAGE" node server/js/main.js >/dev/null
 until docker logs cvfork-web 2>&1 | grep -q "Maintenance complete"; do

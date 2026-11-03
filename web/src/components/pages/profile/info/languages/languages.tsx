@@ -16,7 +16,11 @@ import { VariantContributionOptions } from '../variant-contribution-options'
 import URLS from '../../../../../urls'
 import { LocaleLink } from '../../../../locale-helpers'
 
+import { hiddenOnPrivateInstance } from '../../../../../fork/hidden-on-private-instance'
+
 import './languages.css'
+
+const RequestLanguage = hiddenOnPrivateInstance('div')
 
 export type AccentsAll = {
   [locale: string]: {
@@ -149,14 +153,14 @@ function ProfileInfoLanguages({
           <span aria-hidden={true}>+</span>
         </Button>
 
-        <div style={{ marginTop: 10 }}>
+        <RequestLanguage style={{ marginTop: 10 }}>
           <Localized id="request-language-text" />{' '}
           <LocaleLink to={URLS.LANGUAGE_REQUEST} className="link">
             <Localized id="request-language-button">
               <i />
             </Localized>
           </LocaleLink>
-        </div>
+        </RequestLanguage>
       </div>
     </>
   )

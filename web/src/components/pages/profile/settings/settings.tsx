@@ -12,6 +12,7 @@ import StateTree from '../../../../stores/tree'
 import { User } from '../../../../stores/user'
 import { LabeledInput, LinkButton } from '../../../ui/ui'
 import { PenIcon } from '../../../ui/icons'
+import { CONTACT_EMAIL, IS_PRIVATE_INSTANCE } from '../../../../fork/config'
 
 // We disabled email subscription management for now, because in the current system unsubscribing will be done through emails.
 // But this can change in the future
@@ -101,11 +102,18 @@ function Settings(props: Props) {
           </Localized>
         </LinkButton>
         <Localized
-          id="email-change-information"
+          id={
+            IS_PRIVATE_INSTANCE
+              ? 'fork-email-change-information'
+              : 'email-change-information'
+          }
+          vars={{ email: CONTACT_EMAIL }}
           elems={{
             emailFragment: (
               <a
-                href={`mailto:${COMMON_VOICE_EMAIL}`}
+                href={`mailto:${
+                  IS_PRIVATE_INSTANCE ? CONTACT_EMAIL : COMMON_VOICE_EMAIL
+                }`}
                 target="_blank"
                 rel="noreferrer"
               />

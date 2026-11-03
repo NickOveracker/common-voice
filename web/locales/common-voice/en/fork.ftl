@@ -114,3 +114,12 @@ fork-consent-notes = Notes
 fork-consent-save = Save consent
 fork-consent-withdraw = Withdraw consent
 fork-consent-withdraw-confirm = Withdraw this consent? New recordings of this speaker won't be possible until consent is recorded again.
+
+## Site name, shown as plain text in place of the Common Voice logo
+fork-site-name = Ainu Voice Archive
+
+## Profile
+fork-why-profile-text = The information in your profile helps describe the recordings you contribute. Only a username is needed; everything else is optional.
+fork-why-demographic-explanation = Age and sex or gender help describe the recordings you make yourself. They are kept in the archive with those recordings and are never shown next to your name. Your username is shown to other members only if you make it visible.
+fork-accept-privacy-and-terms = I agree to the <termsLink>terms</termsLink>, and to my information being handled as described in the <privacyLink>privacy notice</privacyLink>.
+fork-email-change-information = To change your email address, write to <emailFragment>{ $email }</emailFragment>.

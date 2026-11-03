@@ -55,7 +55,53 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.waitForLoadState('networkidle')
     log(`signed in, now at ${page.url()}`)
     await page.waitForTimeout(1500)
-    await page.screenshot({ path: `${shots}/1b-profile.png`, fullPage: true })
+    await page.screenshot({ path: `${shots}/1b-signed-in.png`, fullPage: true })
+
+    // Profile setup: no Mozilla newsletter, privacy wording, links or logo
+    await page.goto(`${BASE}/ain/profile/info`)
+    await page.waitForSelector('.profile-info [name="privacy"]', { timeout: 30000 })
+    await page.waitForTimeout(1000)
+    const siteName = await page.textContent('.fork-site-name')
+    const title = await page.title()
+    log(`header shows "${siteName}", page title "${title}"`)
+    if (siteName !== 'アイヌ語音声アーカイブ' || title !== siteName) {
+      throw new Error('site name missing from header or title')
+    }
+    const profile = await page.evaluate(() => ({
+      text: document.querySelector('main, #content, body').innerText,
+      newsletter: document.querySelectorAll('[name="email-opt-in"]').length,
+      mozillaLinks: [...document.querySelectorAll('a[href]')]
+        .map(a => a.href)
+        .filter(href => /mozilla/i.test(href) || href.includes('/language/request')),
+      logoImages: document.querySelectorAll('.LogoImage').length,
+    }))
+    log(
+      `profile: newsletter ${profile.newsletter}, Mozilla/request links ${profile.mozillaLinks.length}, logo images ${profile.logoImages}`
+    )
+    if (profile.newsletter || profile.mozillaLinks.length || profile.logoImages) {
+      throw new Error('Mozilla leftovers on profile page: ' + profile.mozillaLinks.join(' '))
+    }
+    if (/Mozilla/i.test(profile.text)) throw new Error('profile page mentions Mozilla')
+    if (!profile.text.includes('プライバシーに関するお知らせ')) {
+      throw new Error('community privacy wording missing')
+    }
+    await page.screenshot({ path: `${shots}/1c-profile.png`, fullPage: true })
+
+    await page.fill('.profile-info [name="username"]', `facilitator-${RUN}`)
+    const privacy = page.locator('.profile-info [name="privacy"]')
+    if (!(await privacy.isDisabled())) await privacy.check({ force: true })
+    const saved = page.waitForResponse(
+      r => r.url().endsWith('/api/v1/user_client') && r.request().method() !== 'GET'
+    )
+    await page.click('.profile-info button.save')
+    const saveStatus = (await saved).status()
+    log(`profile saved without a terms dialog, status ${saveStatus}`)
+    if (saveStatus !== 200) throw new Error('profile save failed')
+    const newsletter = await page.evaluate(
+      async () => (await fetch('/api/v1/newsletter/someone@example.org', { method: 'POST' })).status
+    )
+    log(`newsletter sign-up request status: ${newsletter}`)
+    if (newsletter !== 404) throw new Error('newsletter route is not disabled')
 
     await page.goto(`${BASE}/ain/speakers`)
     await page.waitForSelector('text=話者を追加', { timeout: 30000 })
@@ -134,7 +180,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     // Interface language switch keeps the contribution language in the URL
     await page.evaluate(() => localStorage.setItem('interface-locale', 'en'))
     await page.reload()
-    await page.waitForSelector('text=Stories')
+    await page.getByRole('heading', { name: 'Stories' }).waitFor()
     log(`English interface at ${page.url()}`)
     await page.screenshot({ path: `${shots}/6-english.png`, fullPage: true })
 

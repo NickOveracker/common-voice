@@ -74,6 +74,7 @@ import { projectSchema } from '../api/languages/validation/project-schema'
 import webhooksRouter from '../api/webhooks/routes'
 import { createMd5Hash } from '../infrastructure/crypto/crypto'
 import { requireLoginMiddleware } from '../fork/require-login'
+import { disabledRoutesMiddleware } from '../fork/disabled-routes'
 import { getForkConfig } from '../fork/config'
 import forkRouter from '../fork/routes'
 
@@ -115,6 +116,7 @@ export default class API {
 
     router.use(authMiddleware)
     router.use(requireLoginMiddleware)
+    router.use(disabledRoutesMiddleware)
 
     // Feature flag handling - should come early to set cookies
     router.use(this.handleFeatureMiddleware.handle)

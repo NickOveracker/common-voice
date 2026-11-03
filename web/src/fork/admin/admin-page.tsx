@@ -52,12 +52,19 @@ const AdminPage = () => {
   const change = async (user: CommunityUser, role: Role, granted: boolean) => {
     setBusy(true)
     setError(null)
+    // Show the change at once; the list is reloaded from the server after
+    const roles = granted
+      ? [...user.roles, role]
+      : user.roles.filter(held => held !== role)
+    setUsers(current =>
+      current.map(u => (u.client_id === user.client_id ? { ...u, roles } : u))
+    )
     try {
       await (granted ? grantRole : revokeRole)(user.client_id, role)
-      load()
     } catch (e) {
       setError(e.message)
     } finally {
+      load()
       setBusy(false)
     }
   }

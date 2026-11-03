@@ -14,6 +14,7 @@ const NewRecordingPage = lazyWithRetry(
 const SpeakersPage = lazyWithRetry(() => import('./stories/speakers-page'))
 const RecordingPage = lazyWithRetry(() => import('./stories/recording-page'))
 const AdminPage = lazyWithRetry(() => import('./admin/admin-page'))
+const PromptsPage = lazyWithRetry(() => import('./stories/prompts-page'))
 
 // Upstream pages that are hidden on private instances. They link to public
 // datasets, donations, Mozilla's own content or language requests.
@@ -64,6 +65,12 @@ export function privateInstanceRoutes(
       exact
       path={toLocaleRoute(FORK_URLS.STORY + ':recordingId(\\d+)')}
       component={RecordingPage}
+    />,
+    <Route
+      key="prompts"
+      exact
+      path={toLocaleRoute(FORK_URLS.PROMPTS)}
+      component={PromptsPage}
     />,
     <Route
       key="admin"

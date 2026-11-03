@@ -1,7 +1,12 @@
 import type { MenuConfig } from '../components/layout/nav/contribute-menu'
 import type { NavItem } from '../components/layout/nav/nav'
 import type { ContributeMenuItem } from '../components/layout/nav/contribute-menu'
-import { ChatBubbleIcon, Play, UserIcon } from '../components/ui/icons'
+import {
+  BookmarkIcon,
+  ChatBubbleIcon,
+  Play,
+  UserIcon,
+} from '../components/ui/icons'
 import URLS from '../urls'
 import FORK_URLS from './urls'
 import { IS_PRIVATE_INSTANCE } from './config'
@@ -26,6 +31,15 @@ const FORK_ITEMS: Partial<Record<NavItem, ContributeMenuItem[]>> = {
       localizedId: 'fork-menu-record-story',
       menuItemTooltip: 'fork-menu-record-story-tooltip',
       menuItemAriaLabel: 'fork-menu-record-story',
+      requiresAuth: true,
+      type: 'general',
+    },
+    {
+      icon: BookmarkIcon,
+      internalHref: FORK_URLS.PROMPTS,
+      localizedId: 'fork-menu-prompts',
+      menuItemTooltip: 'fork-menu-prompts-tooltip',
+      menuItemAriaLabel: 'fork-menu-prompts',
       requiresAuth: true,
       type: 'general',
     },

@@ -91,6 +91,8 @@ const recordingProperties: Record<string, JSONSchema7> = {
     items: { type: 'integer', minimum: 1 },
   },
   recorded_on: partialDate,
+  // The approved prompt the recording answers
+  prompt_id: { type: ['integer', 'null'], minimum: 1 },
   // Optional: many archived recordings have no known location
   location: nullableString(255),
 }
@@ -182,5 +184,26 @@ export const AddReviewRequest: AllowedSchema = {
   properties: {
     verdict: { type: 'string', enum: ['approved', 'needs_work'] },
     comment: nullableString(2000),
+  },
+}
+
+export const CreatePromptRequest: AllowedSchema = {
+  type: 'object',
+  required: ['text_ja'],
+  additionalProperties: false,
+  properties: {
+    text_ja: { type: 'string', minLength: 1, maxLength: 1000 },
+    text_ain: nullableString(1000),
+  },
+}
+
+export const UpdatePromptRequest: AllowedSchema = {
+  type: 'object',
+  additionalProperties: false,
+  minProperties: 1,
+  properties: {
+    status: { type: 'string', enum: ['pending', 'approved', 'rejected'] },
+    text_ja: { type: 'string', minLength: 1, maxLength: 1000 },
+    text_ain: nullableString(1000),
   },
 }

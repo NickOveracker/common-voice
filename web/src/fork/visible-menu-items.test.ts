@@ -29,6 +29,7 @@ describe('visibleMenuItems', () => {
     expect(items.map(item => item.internalHref)).toEqual([
       URLS.SPEAK,
       FORK_URLS.STORIES_NEW,
+      FORK_URLS.PROMPTS,
       FORK_URLS.SPEAKERS,
       URLS.LISTEN,
       FORK_URLS.STORIES,

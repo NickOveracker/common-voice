@@ -7,6 +7,7 @@ import { canManageSpeaker, currentConsents } from './speakers'
 import { chunkPath, getAudioUrl, putObject } from './storage'
 import { queueRecordingProcessing } from './processing'
 import { emptyCounts, Progress, segmentProgress } from './segments'
+import { isApprovedPrompt, promptsById } from './prompts'
 import { withTransaction } from './transaction'
 
 // Long recordings (stories, interviews, conversations). Audio is sent in
@@ -24,6 +25,7 @@ type RecordingRow = {
   id: number
   title: string
   description: string | null
+  prompt_id: number | null
   languages: string
   source: string
   status: string
@@ -105,12 +107,14 @@ async function presentRecording(
   user: SessionUser,
   row: RecordingRow,
   speakers: { id: number; display_name: string }[],
-  progress: Progress | undefined
+  progress: Progress | undefined,
+  prompts: Awaited<ReturnType<typeof promptsById>>
 ) {
   return {
     id: row.id,
     title: row.title,
     description: row.description,
+    prompt: row.prompt_id ? prompts.get(row.prompt_id) ?? null : null,
     languages: row.languages ? row.languages.split(',') : [],
     source: row.source,
     status: row.status,
@@ -149,6 +153,9 @@ export const listRecordings = async (request: Request, response: Response) => {
   const ids = rows.map((row: RecordingRow) => row.id)
   const speakers = await speakersByRecording(ids)
   const progress = await segmentProgress(ids)
+  const prompts = await promptsById(
+    rows.map((row: RecordingRow) => row.prompt_id).filter(Boolean)
+  )
   response.json(
     await Promise.all(
       rows.map((row: RecordingRow) =>
@@ -156,7 +163,8 @@ export const listRecordings = async (request: Request, response: Response) => {
           user,
           row,
           speakers.get(row.id) ?? [],
-          progress.get(row.id)
+          progress.get(row.id),
+          prompts
         )
       )
     )
@@ -178,7 +186,8 @@ export const getRecording = async (request: Request, response: Response) => {
       user,
       recording,
       speakers.get(recording.id) ?? [],
-      (await segmentProgress([recording.id])).get(recording.id)
+      (await segmentProgress([recording.id])).get(recording.id),
+      await promptsById(recording.prompt_id ? [recording.prompt_id] : [])
     )),
     // Lets an interrupted upload continue where it stopped
     uploaded_chunks:
@@ -198,6 +207,11 @@ export const createRecording = async (request: Request, response: Response) => {
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: speakerError })
   }
+  if (body.prompt_id && !(await isApprovedPrompt(body.prompt_id))) {
+    return response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'unknown prompt' })
+  }
 
   const id = await withTransaction(async connection => {
     const [result] = await connection.query(
@@ -206,6 +220,7 @@ export const createRecording = async (request: Request, response: Response) => {
         {
           title: body.title,
           description: body.description ?? null,
+          prompt_id: body.prompt_id ?? null,
           languages: body.languages.join(','),
           source: body.source,
           recorded_on: body.recorded_on ?? null,
@@ -239,6 +254,11 @@ export const updateRecording = async (request: Request, response: Response) => {
   }
 
   const { speaker_ids, languages, ...fields } = request.body
+  if (fields.prompt_id && !(await isApprovedPrompt(fields.prompt_id))) {
+    return response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'unknown prompt' })
+  }
   if (speaker_ids) {
     const speakerError = await checkSpeakers(user, speaker_ids)
     if (speakerError) {

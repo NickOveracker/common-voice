@@ -21,6 +21,7 @@ import {
 import { uploadFile } from './chunked-upload'
 import { contiguousChunkCount, formatDuration } from './format'
 import { RecordingLanguages } from './languages'
+import PromptText from './prompt-text'
 
 import './stories.css'
 
@@ -142,6 +143,14 @@ const RecordingCard = ({
         </>
       )}
     </p>
+    {recording.prompt && (
+      <p className="fork-stories__meta">
+        <Localized id="fork-stories-prompt">
+          <span />
+        </Localized>{' '}
+        <PromptText prompt={recording.prompt} />
+      </p>
+    )}
     {recording.description && <p>{recording.description}</p>}
 
     {recording.status === 'ready' && (

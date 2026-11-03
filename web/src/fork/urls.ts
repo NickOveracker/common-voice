@@ -5,5 +5,6 @@ export default Object.freeze({
   // Followed by the recording's id
   STORY: '/stories/',
   SPEAKERS: '/speakers',
+  PROMPTS: '/prompts',
   ADMIN: '/admin',
 })

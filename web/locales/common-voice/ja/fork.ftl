@@ -181,6 +181,31 @@ fork-admin-role-for = { $role }：{ $user }
 fork-admin-configured = サーバーの設定による管理者
 fork-admin-configured-note = サーバーの CV_ADMIN_EMAILS に設定された人は常に管理者で、変更はサーバー側でのみできます。自分の管理者の役割は外せません。
 
+## Prompts
+fork-menu-prompts = 語りのテーマ
+fork-menu-prompts-tooltip = 語ってもらうための話題や問いかけ
+fork-prompts-title = 語りのテーマ
+fork-prompts-intro = 語りを始めるきっかけになる話題や問いかけです。テーマを選んで録音するか、新しいテーマを提案してください。提案はモデレーターが確認してからここに載ります。
+fork-prompts-empty = まだテーマがありません。
+fork-prompts-record = このテーマで録音する
+fork-prompts-recordings = 語り { $count } 件
+fork-prompts-withdraw = 取り下げる
+fork-prompts-to-decide = 確認待ちの提案
+fork-prompts-yours = あなたの提案
+fork-prompts-status-pending = モデレーターの確認待ち
+fork-prompts-status-rejected = 採用されていません
+fork-prompts-approve = 採用する
+fork-prompts-reject = 採用しない
+fork-prompts-suggest = テーマを提案する
+fork-prompts-field-ja = テーマ（日本語）
+fork-prompts-field-ain = アイヌ語（任意）
+fork-prompts-send = 提案する
+fork-prompts-sent-pending = ありがとうございます。モデレーターが確認します。
+fork-prompts-sent-approved = 追加しました。
+fork-new-field-prompt = テーマ（任意）
+fork-new-no-prompt = なし
+fork-stories-prompt = テーマ：
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ
 

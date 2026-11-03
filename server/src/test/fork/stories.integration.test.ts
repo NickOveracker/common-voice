@@ -739,4 +739,101 @@ describeIntegration('stories API', () => {
     expect(revoke.status).toBe(204)
     expect((await api(MEMBER, 'GET', '/roles')).json.roles).toEqual([])
   })
+
+  it('offers approved prompts, suggested by anyone', async () => {
+    // A member's suggestion waits for a moderator; only they see it
+    const suggested = await api(MEMBER, 'POST', '/prompts', {
+      text_ja: ' 子どもの頃の遊び ',
+      text_ain: null,
+    })
+    expect(suggested.status).toBe(201)
+    expect(suggested.json.status).toBe('pending')
+    const mine = (await api(MEMBER, 'GET', '/prompts')).json
+    expect(mine).toContainEqual(
+      expect.objectContaining({
+        id: suggested.json.id,
+        text_ja: '子どもの頃の遊び',
+        status: 'pending',
+        is_mine: true,
+      })
+    )
+    expect(
+      (
+        await api(MEMBER, 'PATCH', `/prompts/${suggested.json.id}`, {
+          status: 'approved',
+        })
+      ).status
+    ).toBe(403)
+
+    // Moderators' own suggestions are approved straight away
+    const fromModerator = await api(FACILITATOR, 'POST', '/prompts', {
+      text_ja: 'カムイの話',
+      text_ain: 'kamuy oruspe',
+    })
+    expect(fromModerator.json.status).toBe('approved')
+    expect(
+      (
+        await api(FACILITATOR, 'PATCH', `/prompts/${suggested.json.id}`, {
+          status: 'rejected',
+        })
+      ).status
+    ).toBe(204)
+
+    // Recordings can only answer approved prompts
+    const speaker = await api(FACILITATOR, 'POST', '/speakers', {
+      display_name: 'Elder B',
+    })
+    await api(FACILITATOR, 'POST', `/speakers/${speaker.json.id}/consents`, {
+      archive: true,
+      community_use: true,
+      research: false,
+      speech_technology: false,
+      method: 'verbal',
+    })
+    const recording = {
+      title: 'Kamuy',
+      languages: ['ain'],
+      speaker_ids: [speaker.json.id],
+      source: 'upload',
+    }
+    expect(
+      (
+        await api(FACILITATOR, 'POST', '/recordings', {
+          ...recording,
+          prompt_id: suggested.json.id,
+        })
+      ).status
+    ).toBe(400)
+    const created = await api(FACILITATOR, 'POST', '/recordings', {
+      ...recording,
+      prompt_id: fromModerator.json.id,
+    })
+    expect(created.status).toBe(201)
+    const shown = (
+      await api(FACILITATOR, 'GET', `/recordings/${created.json.id}`)
+    ).json
+    expect(shown.prompt).toEqual({
+      id: fromModerator.json.id,
+      text_ja: 'カムイの話',
+      text_ain: 'kamuy oruspe',
+    })
+
+    // Members see approved prompts, not others' rejected ones
+    const forFacilitator = (await api(FACILITATOR, 'GET', '/prompts')).json
+    expect(forFacilitator.map((p: { id: number }) => p.id)).toContain(
+      suggested.json.id
+    )
+    await api(FACILITATOR, 'POST', '/prompts', { text_ja: '漁の話' })
+    const forMember = (await api(MEMBER, 'GET', '/prompts')).json
+    expect(
+      forMember.map((p: { text_ja: string; status: string }) => [
+        p.text_ja,
+        p.status,
+      ])
+    ).toEqual([
+      ['漁の話', 'approved'],
+      ['カムイの話', 'approved'],
+      ['子どもの頃の遊び', 'rejected'],
+    ])
+  })
 })

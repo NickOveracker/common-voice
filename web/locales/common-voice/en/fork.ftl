@@ -181,6 +181,34 @@ fork-admin-role-for = { $role }: { $user }
 fork-admin-configured = Admin through the server settings
 fork-admin-configured-note = Admins listed in the server's CV_ADMIN_EMAILS setting are always admins; that can only be changed on the server. You can't remove your own admin role.
 
+## Prompts
+fork-menu-prompts = Story prompts
+fork-menu-prompts-tooltip = Topics and questions to tell stories about
+fork-prompts-title = Story prompts
+fork-prompts-intro = Topics and questions that help people start telling a story. Pick one to record, or suggest your own: moderators look at suggestions before they appear here.
+fork-prompts-empty = No prompts yet.
+fork-prompts-record = Record a story about this
+fork-prompts-recordings = { $count ->
+        [one] 1 story
+       *[other] { $count } stories
+    }
+fork-prompts-withdraw = Withdraw
+fork-prompts-to-decide = Suggestions to decide on
+fork-prompts-yours = Your suggestions
+fork-prompts-status-pending = Waiting for a moderator
+fork-prompts-status-rejected = Not used
+fork-prompts-approve = Use it
+fork-prompts-reject = Don't use it
+fork-prompts-suggest = Suggest a prompt
+fork-prompts-field-ja = Prompt in Japanese
+fork-prompts-field-ain = In Ainu (optional)
+fork-prompts-send = Suggest
+fork-prompts-sent-pending = Thank you. A moderator will look at it.
+fork-prompts-sent-approved = Added.
+fork-new-field-prompt = Prompt (optional)
+fork-new-no-prompt = None
+fork-stories-prompt = Prompt:
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive
 

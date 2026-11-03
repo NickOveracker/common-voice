@@ -300,3 +300,25 @@
 .fork-review__text {
   white-space: pre-wrap;
 }
+
+/* Prompts */
+
+.fork-prompts__text {
+  font-size: var(--font-size-md);
+  margin: 0 0 0.75rem;
+}
+
+.fork-prompts__ain {
+  display: block;
+  color: var(--warm-grey, #959595);
+  font-size: var(--font-size-sm);
+}
+
+.fork-stories__meta .fork-prompts__ain {
+  display: inline;
+  margin-inline-start: 0.5em;
+}
+
+.fork-prompts h2 {
+  margin-block-start: 2rem;
+}

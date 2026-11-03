@@ -165,8 +165,26 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: `${shots}/2-speakers.png`, fullPage: true })
 
-    await page.goto(`${BASE}/ain/stories/new`)
+    // A prompt to record from. The facilitator is an admin, so their
+    // suggestion is approved straight away
+    const PROMPT = `子どもの頃の遊び ${RUN}`
+    await page.goto(`${BASE}/ain/prompts`)
+    await page.getByLabel('テーマ（日本語）').fill(PROMPT)
+    await page.getByLabel('アイヌ語（任意）').fill('hekattar ukoasinpe')
+    await page.click('button:has-text("提案する")')
+    await page.locator('text=追加しました。').waitFor()
+    const promptCard = page.locator('.fork-prompts__card', {
+      has: page.locator(`text=${PROMPT}`),
+    })
+    await promptCard.waitFor()
+    await page.screenshot({ path: `${shots}/2b-prompts.png`, fullPage: true })
+    await promptCard.locator('a:has-text("このテーマで録音する")').click()
     await page.waitForSelector('text=録音について')
+    const chosen = await page
+      .getByLabel('テーマ（任意）')
+      .evaluate(select => select.selectedOptions[0].textContent)
+    log(`prompt suggested and chosen for the recording: ${chosen}`)
+    if (!chosen.startsWith(PROMPT)) throw new Error('prompt not preselected')
     await page.getByLabel('タイトル').fill(TITLE)
     await page.getByLabel('日本語').check({ force: true })
     await page.getByLabel(SPEAKER).check({ force: true })
@@ -202,6 +220,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     })
     const meta = await card.locator('.fork-stories__meta').first().innerText()
     log(`stories list shows: ${meta}`)
+    if ((await card.locator(`text=${PROMPT}`).count()) === 0) {
+      throw new Error('prompt not shown on the story')
+    }
 
     const audio = await page.evaluate(async () => {
       const el = document.querySelector('audio')
@@ -461,6 +482,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       ['speakers', 'Speakers'],
       [storyPath, TITLE],
       ['admin', 'Admin'],
+      ['prompts', 'Story prompts'],
     ]) {
       await page.goto(`${BASE}/ain/${path}`)
       await page

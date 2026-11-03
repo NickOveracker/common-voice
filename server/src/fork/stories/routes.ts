@@ -5,6 +5,8 @@ import { StatusCodes } from 'http-status-codes'
 import { validateStrict } from '../../lib/validation'
 import {
   AddReviewRequest,
+  CreatePromptRequest,
+  UpdatePromptRequest,
   AddTranscriptRequest,
   CompleteRecordingRequest,
   CreateConsentRequest,
@@ -25,6 +27,7 @@ import {
   updateSegment,
 } from './segments'
 import { addReview } from './reviews'
+import { createPrompt, listPrompts, updatePrompt } from './prompts'
 import {
   addConsent,
   createSpeaker,
@@ -59,7 +62,7 @@ const requireSignedIn = (
 
 export default PromiseRouter({ mergeParams: true })
   .use(
-    ['/speakers', '/recordings', '/segments', '/transcripts'],
+    ['/speakers', '/recordings', '/segments', '/transcripts', '/prompts'],
     requireSignedIn
   )
   .get('/speakers', listSpeakers)
@@ -129,4 +132,11 @@ export default PromiseRouter({ mergeParams: true })
     '/transcripts/:transcriptId(\\d+)/reviews',
     validateStrict({ body: AddReviewRequest }),
     addReview
+  )
+  .get('/prompts', listPrompts)
+  .post('/prompts', validateStrict({ body: CreatePromptRequest }), createPrompt)
+  .patch(
+    '/prompts/:promptId(\\d+)',
+    validateStrict({ body: UpdatePromptRequest }),
+    updatePrompt
   )

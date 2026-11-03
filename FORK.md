@@ -135,6 +135,11 @@ datasets with photos of other communities.
   /segments/:id/transcripts?kind=` lists them). A save names the version it
   started from; if someone else saved since, it gets 409 and the other text,
   and saving again replaces it knowingly.
+- Story prompts (`/<locale>/prompts`, `server/src/fork/stories/prompts.ts`,
+  `fork_prompts`): topics and questions to tell stories about, in Japanese
+  and optionally Ainu. Anyone signed in suggests them; moderators approve or
+  reject them, and their own are approved at once. A recording can name the
+  approved prompt it answers (`prompt_id`).
 - Reviewers (and moderators and admins) mark the current version of a
   text as checked or needing work, with an optional comment
   (`POST /transcripts/:id/reviews`, `fork_transcript_reviews`). Nobody

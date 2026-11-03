@@ -51,6 +51,8 @@ export type Recording = {
   id: number
   title: string
   description: string | null
+  // The prompt the recording answers
+  prompt: Pick<Prompt, 'id' | 'text_ja' | 'text_ain'> | null
   languages: RecordingLanguage[]
   source: 'browser' | 'upload'
   status: 'uploading' | 'processing' | 'ready' | 'failed'
@@ -82,6 +84,7 @@ export type NewRecording = {
   source: 'browser' | 'upload'
   recorded_on?: string | null
   location?: string | null
+  prompt_id?: number | null
   original_filename?: string | null
   original_mime?: string | null
 }
@@ -261,3 +264,25 @@ export const grantRole = (clientId: string, role: Role) =>
   request<null>('PUT', `/admin/users/${clientId}/roles/${role}`)
 export const revokeRole = (clientId: string, role: Role) =>
   request<null>('DELETE', `/admin/users/${clientId}/roles/${role}`)
+
+// Topics and questions that draw out stories
+export type Prompt = {
+  id: number
+  text_ja: string
+  text_ain: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  is_mine: boolean
+  // Ready recordings that answer it
+  recordings: number
+}
+
+export const listPrompts = () => request<Prompt[]>('GET', '/prompts')
+export const createPrompt = (prompt: {
+  text_ja: string
+  text_ain: string | null
+}) =>
+  request<{ id: number; status: Prompt['status'] }>('POST', '/prompts', prompt)
+export const updatePrompt = (
+  id: number,
+  changes: Partial<Pick<Prompt, 'status' | 'text_ja' | 'text_ain'>>
+) => request<null>('PATCH', `/prompts/${id}`, changes)

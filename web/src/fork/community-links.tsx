@@ -26,6 +26,9 @@ const CommunityLinks = () => {
       <Localized id="fork-menu-record-story">
         <LinkButton rounded outline to={FORK_URLS.STORIES_NEW} />
       </Localized>
+      <Localized id="fork-menu-prompts">
+        <LinkButton rounded outline to={FORK_URLS.PROMPTS} />
+      </Localized>
       <Localized id="fork-menu-speakers">
         <LinkButton rounded outline to={FORK_URLS.SPEAKERS} />
       </Localized>

@@ -7,6 +7,7 @@ import {
   Button,
   LabeledCheckbox,
   LabeledInput,
+  LabeledSelect,
   LabeledTextArea,
   LinkButton,
   Spinner,
@@ -14,7 +15,9 @@ import {
 import FORK_URLS from '../urls'
 import {
   createRecording,
+  listPrompts,
   listSpeakers,
+  Prompt,
   RecordingLanguage,
   Speaker,
 } from './api'
@@ -31,6 +34,7 @@ type Details = {
   speakerIds: number[]
   recordedOn: string
   location: string
+  promptId: number | null
 }
 
 const RECORDED_ON_PATTERN =
@@ -59,15 +63,19 @@ const DetailsForm = ({
 }) => {
   const { l10n } = useLocalization()
   const [speakers, setSpeakers] = React.useState<Speaker[] | null>(null)
+  const [prompts, setPrompts] = React.useState<Prompt[]>([])
   const [error, setError] = React.useState<string | null>(null)
-  const [details, setDetails] = React.useState<Details>({
+  const [details, setDetails] = React.useState<Details>(() => ({
     title: '',
     description: '',
     languages: ['ain'],
     speakerIds: [],
     recordedOn: '',
     location: '',
-  })
+    // Chosen on the prompts page
+    promptId:
+      Number(new URLSearchParams(window.location.search).get('prompt')) || null,
+  }))
   const [file, setFile] = React.useState<File | null>(null)
   const canRecordRef = React.useRef(supportedMimeType() !== null)
 
@@ -75,6 +83,9 @@ const DetailsForm = ({
     listSpeakers()
       .then(all => setSpeakers(all.filter(speaker => speaker.can_manage)))
       .catch(e => setError(e.message))
+    listPrompts()
+      .then(all => setPrompts(all.filter(p => p.status === 'approved')))
+      .catch((): null => null)
   }, [])
 
   const set = (changes: Partial<Details>) =>
@@ -115,6 +126,22 @@ const DetailsForm = ({
           set({ description: event.target.value })
         }
       />
+      {prompts.length > 0 && (
+        <LabeledSelect
+          label={l10n.getString('fork-new-field-prompt')}
+          value={details.promptId ?? ''}
+          onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+            set({ promptId: Number(event.target.value) || null })
+          }>
+          <option value="">{l10n.getString('fork-new-no-prompt')}</option>
+          {prompts.map(prompt => (
+            <option key={prompt.id} value={prompt.id}>
+              {prompt.text_ja}
+              {prompt.text_ain ? ` / ${prompt.text_ain}` : ''}
+            </option>
+          ))}
+        </LabeledSelect>
+      )}
 
       <fieldset>
         <Localized id="fork-new-field-languages">
@@ -429,6 +456,7 @@ const NewRecordingPage = () => {
         source,
         recorded_on: details.recordedOn.trim() || null,
         location: details.location.trim() || null,
+        prompt_id: details.promptId,
         original_filename: file?.name ?? null,
         original_mime: file?.type || null,
       })

@@ -1,4 +1,5 @@
 import default_locale from './languages/default-locale'
+import ain from './languages/ain'
 import am from './languages/am'
 import bas from './languages/bas'
 import ca from './languages/ca'
@@ -35,6 +36,7 @@ import {
 } from '../types'
 
 const VALIDATORS: Validators = {
+  ain,
   am,
   bas,
   ca,
@@ -63,7 +65,7 @@ const VALIDATORS: Validators = {
 // For certain language we want to normalize before we validate.
 // This then also means that the returned sentence is normalized
 // and therefore will be saved to the database in normalized form.
-const USE_NFC_NORMALIZATION = ['ko']
+const USE_NFC_NORMALIZATION = ['ain', 'ko']
 
 const getValidatorFor = (locale: ValidatorLocale | string): ValidatorRule[] =>
   isValidatorLocale(locale) ? VALIDATORS[locale] : default_locale

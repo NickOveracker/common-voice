@@ -2,6 +2,7 @@ import 'focus-visible';
 import * as React from 'react';
 import { render } from 'react-dom';
 import './components/index.css';
+import './fork/fonts.css';
 
 declare var require: any;
 

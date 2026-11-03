@@ -3,11 +3,12 @@ import { useState } from 'react';
 
 import URLS from '../../urls';
 import { isProduction } from '../../utility';
+import { IS_PRIVATE_INSTANCE } from '../../fork/config';
 
 import './non-production-banner.css';
 
 const NonProductionBanner = () => {
-  const [hide, setHide] = useState(isProduction());
+  const [hide, setHide] = useState(isProduction() || IS_PRIVATE_INSTANCE);
 
   if (hide) {
     return null;

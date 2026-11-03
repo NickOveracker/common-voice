@@ -6,6 +6,7 @@ import { ReactLocalization } from '@fluent/react';
 import { Flags } from '../stores/flags';
 import API from './api';
 import MessageOverwrites = Flags.MessageOverwrites;
+import { withLocaleFallbacks } from '../fork/locale-fallbacks';
 
 export const DEFAULT_LOCALE = 'en';
 
@@ -61,7 +62,10 @@ export async function createLocalization(
   messageOverwrites: MessageOverwrites,
   availableLocales: string[]
 ) {
-  const currentLocales = negotiateLocales(userLocales, availableLocales);
+  const currentLocales = withLocaleFallbacks(
+    negotiateLocales(userLocales, availableLocales),
+    availableLocales
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const localeMessages: any = await Promise.all(

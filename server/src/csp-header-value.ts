@@ -1,6 +1,8 @@
 import { getConfig } from './config-helper'
+import { getForkConfig } from './fork/config'
+import { getStrictCSPSources } from './fork/csp-sources'
 
-const SOURCES = {
+const DEFAULT_SOURCES: { [directive: string]: string[] } = {
   'default-src': ["'none'"],
   'child-src': ["'self'", 'blob:'],
   'style-src': [
@@ -105,6 +107,9 @@ const SOURCES = {
 function getCSPHeaderValue() {
   const { PROD } = getConfig()
   const localhostURLs = 'http://localhost:*'
+  const SOURCES = getForkConfig().STRICT_CSP
+    ? getStrictCSPSources()
+    : DEFAULT_SOURCES
 
   /*
     default to production mode to make sure we

@@ -2,6 +2,7 @@ import * as nodemailer from 'nodemailer'
 import * as AWS from '@aws-sdk/client-ses'
 
 import { getConfig } from '../config-helper'
+import { getForkConfig } from '../fork/config'
 import {
   BulkSubmissionContactInformation,
   BulkSubmissionEmailData,
@@ -21,6 +22,12 @@ class Email {
 
   private async createTransporter() {
     const { PROD } = getConfig()
+    const { SMTP_URL } = getForkConfig()
+
+    if (SMTP_URL) {
+      this.transporter = nodemailer.createTransport(SMTP_URL)
+      return
+    }
 
     if (!PROD) {
       this.transporter = await this.createTestTransporter()

@@ -14,6 +14,7 @@ import DB from './lib/model/db'
 import UserClient from './lib/model/user-client'
 import * as jwt from 'jsonwebtoken'
 import * as cookieParser from 'cookie-parser'
+import { allowsAnonymousClient } from './fork/require-login'
 
 const PromiseRouter = require('express-promise-router')
 const MySQLStore = require('express-mysql-session')(session)
@@ -255,7 +256,7 @@ export async function authMiddleware(
   const [authType, credentials] = (request.header('Authorization') || '').split(
     ' '
   )
-  if (authType === 'Basic') {
+  if (authType === 'Basic' && allowsAnonymousClient(request)) {
     const [client_id, auth_token] = Buffer.from(credentials, 'base64')
       .toString()
       .split(':')

@@ -24,6 +24,8 @@ import { setupBulkSubmissionQueue } from './infrastructure/queues/bulkSubmission
 import { importSentences } from './lib/model/db/import-sentences'
 import { setupAuthRouter } from './auth-router'
 import { TimeUnits } from 'common'
+import { getForkConfig, usesStaticLocales } from './fork/config'
+import { importStaticLocales } from './fork/locales'
 
 const MAINTENANCE_VERSION_KEY = 'maintenance-version'
 const FULL_CLIENT_PATH = path.join(__dirname, '..', '..', 'web')
@@ -121,7 +123,11 @@ export default class Server {
 
       app.get('/robots.txt', function (req, res) {
         res.type('text/plain')
-        res.send('User-agent: *\nDisallow: /spontaneous-speech/')
+        res.send(
+          getForkConfig().ROBOTS_DISALLOW_ALL
+            ? 'User-agent: *\nDisallow: /'
+            : 'User-agent: *\nDisallow: /spontaneous-speech/'
+        )
       })
 
       app.use(await setupAuthRouter())
@@ -270,7 +276,7 @@ export default class Server {
     try {
       await this.model.performMaintenance()
       await scrubUserActivity()
-      await importLocales()
+      await (usesStaticLocales() ? importStaticLocales() : importLocales())
 
       // We no longer need to import sentences from files since users can now
       // directly add sentences on the CV platform. However, it is still

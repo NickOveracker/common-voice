@@ -15,6 +15,7 @@ import {
   fetchClipsThatUserInteractedWithFromDB,
   fetchVariantClipsFromDB,
 } from '../application/repository/clips-repository'
+import { usesStaticLocales } from '../fork/config'
 
 const AVG_CLIP_SECONDS = 4.835 // average seconds per clip across all languages - as of 2025-11-23
 
@@ -34,6 +35,7 @@ type PontoonLocale = {
 }
 
 async function fetchLocalizedPercentagesByLocale(): Promise<any> {
+  if (usesStaticLocales()) return {}
   try {
     const projectData = await request({
       uri: 'https://pontoon.mozilla.org/api/v2/projects/common-voice/',

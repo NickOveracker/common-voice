@@ -1,9 +1,10 @@
 import { Environment, getConfig } from '../../config-helper'
+import { getForkConfig } from '../../fork/config'
 
 export const CALLBACK_URL = '/callback'
 
 export const COMMON_VOICE_DOMAIN_MAP: Readonly<Record<Environment, string>> = {
-  prod: 'https://commonvoice.mozilla.org',
+  prod: getForkConfig().PUBLIC_URL || 'https://commonvoice.mozilla.org',
   stage: 'https://commonvoice.allizom.org',
   sandbox: 'https://sandbox.commonvoice.allizom.org',
   local: 'http://localhost:9000', // TODO: use SERVER_PORT

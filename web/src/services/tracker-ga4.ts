@@ -40,5 +40,7 @@ export const trackGtag = (
     string | number | boolean | Array<string | number>
   >
 ) => {
-  gtag('event', eventName, eventParams)
+  if (typeof gtag === 'function') {
+    gtag('event', eventName, eventParams)
+  }
 }

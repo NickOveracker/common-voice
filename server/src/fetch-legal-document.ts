@@ -1,5 +1,6 @@
 import * as commonmark from 'commonmark'
 import * as request from 'request-promise-native'
+import { readLocalLegalDocument } from './fork/legal-documents'
 
 const CACHE_AGE = 24 * 60 * 60 * 1000 // 24 hours (in ms)
 const cache: {
@@ -22,6 +23,9 @@ export default async function fetchLegalDocument(
   name: string,
   locale: string
 ): Promise<string> {
+  const localDocument = readLocalLegalDocument(name, locale)
+  if (localDocument !== null) return localDocument
+
   if (!cache[name]) cache[name] = {}
 
   let { fetchedAt, textHTML } = cache[name][locale] || ({} as any)

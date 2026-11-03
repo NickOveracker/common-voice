@@ -1,0 +1,10 @@
+/* Japanese and Ainu text. None of the default web fonts include kana, so
+   use the system's Japanese fonts. All of these include the small katakana
+   used for Ainu (U+31F0–U+31FF). */
+html[lang='ja'],
+html[lang='ain'] {
+  --base-font-family: 'Noto Sans JP', 'Noto Sans CJK JP', 'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo',
+    sans-serif;
+  --strong-font-family: var(--base-font-family);
+}

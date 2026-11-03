@@ -73,6 +73,7 @@ import { isProject } from '../core/types/project'
 import { projectSchema } from '../api/languages/validation/project-schema'
 import webhooksRouter from '../api/webhooks/routes'
 import { createMd5Hash } from '../infrastructure/crypto/crypto'
+import { requireLoginMiddleware } from '../fork/require-login'
 
 type NewNewsletterResponse = {
   message: string
@@ -111,6 +112,7 @@ export default class API {
     const router = PromiseRouter()
 
     router.use(authMiddleware)
+    router.use(requireLoginMiddleware)
 
     // Feature flag handling - should come early to set cookies
     router.use(this.handleFeatureMiddleware.handle)

@@ -80,7 +80,10 @@ module.exports = (_env, argv) => {
 
     new HtmlWebpackPlugin({
       filename: '../index.html',
-      template: 'index_template.html',
+      template:
+        process.env.CV_PRIVATE_INSTANCE === 'true'
+          ? 'index_template.private.html'
+          : 'index_template.html',
     }),
 
     new PreloadWebpackPlugin({
@@ -95,6 +98,9 @@ module.exports = (_env, argv) => {
 
     new webpack.DefinePlugin({
       'process.env.GIT_COMMIT_SHA': JSON.stringify(process.env.GIT_COMMIT_SHA),
+      'process.env.CV_PRIVATE_INSTANCE': JSON.stringify(
+        process.env.CV_PRIVATE_INSTANCE
+      ),
     }),
   ]
 

@@ -1,0 +1,121 @@
+# A private instance on one server (see README.md). Only the app and Keycloak
+# have ports, and only on 127.0.0.1: Tailscale Serve puts them on HTTPS.
+# The database, Redis and the audio storage are reachable only by the app.
+name: ainu-voice
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        CV_PRIVATE_INSTANCE: 'true'
+        CV_CONTACT_EMAIL: ${CV_CONTACT_EMAIL}
+    env_file: .env
+    environment:
+      CV_MYSQLHOST: db
+      CV_REDIS_URL: redis
+      CV_STORAGE_ENDPOINT: http://storage:4443
+      # Server to Keycloak goes inside Docker; browsers use the public URL
+      CV_FXA_DOMAIN: http://keycloak:8080/realms/voice
+      CV_LEGAL_DOCS_DIR: /srv/legal
+    volumes:
+      - ./legal:/srv/legal:ro
+    ports:
+      - 127.0.0.1:${APP_PORT:-18900}:9000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      storage:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0.31
+    command:
+      # MySQL 8's default collation, which upstream's migrations assume
+      - --sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    environment:
+      MYSQL_ROOT_PASSWORD: ${CV_DB_ROOT_PASS}
+      MYSQL_DATABASE: voiceweb
+      MYSQL_USER: ${CV_MYSQLUSER}
+      MYSQL_PASSWORD: ${CV_MYSQLPASS}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 10s
+      retries: 30
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # Background jobs (processing, segment detection, exports) survive restarts
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - ./data/redis:/data
+    restart: unless-stopped
+
+  # Google Cloud Storage compatible, keeping files in ./data/storage
+  storage:
+    # The version the browser test ran against
+    image: fsouza/fake-gcs-server@sha256:797ce226d62f947c009dc40246b30cfb456b8473d8241407f9d6f2c04e4d69ef
+    command:
+      - -scheme=http
+      - -port=4443
+      - -backend=filesystem
+      - -filesystem-root=/storage
+      - -external-url=http://storage:4443
+    volumes:
+      - ./data/storage:/storage
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ['start']
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://db:3306/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      # Browsers reach Keycloak on this URL; the app reaches it inside Docker
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_URL}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: 'true'
+      KC_HTTP_ENABLED: 'true'
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: 'true'
+    ports:
+      - 127.0.0.1:${KEYCLOAK_PORT:-18901}:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # The image has no curl; bash can open a TCP connection itself
+      test:
+        - CMD-SHELL
+        - exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\r\n\r\n' >&3 && grep -q UP <&3
+      interval: 10s
+      retries: 30
+    restart: unless-stopped
+
+  # A database dump every night, the last 14 kept in ./backups
+  backup:
+    image: mysql:8.0.31
+    entrypoint: ['/bin/sh', '/backup.sh']
+    environment:
+      MYSQL_PWD: ${CV_DB_ROOT_PASS}
+    volumes:
+      - ./backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped

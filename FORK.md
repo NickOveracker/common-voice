@@ -180,6 +180,14 @@ On private instances upstream's scripted speech (reading sentences aloud,
 checking clips, writing sentences, the dashboard) is hidden: this archive
 doesn't use it, and its audio links assume Google Cloud.
 
+## Deployment
+
+`deploy/`: a Compose project for one server (app, MySQL, Redis, audio on the
+server's disk, Keycloak, nightly database dumps), `setup.sh` for setup,
+accounts and updates, and `README.md` for running it. The first instance runs
+on `nickserv` behind Tailscale Serve. `scripts/fork-e2e/smoke.js` checks a
+deployment over its real address.
+
 ## Exports
 
 `server/src/fork/stories/export-builder.ts` and `exports.ts`; page

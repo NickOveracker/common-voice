@@ -1,0 +1,17 @@
+# Used instead of the repository's .dockerignore when building deploy/Dockerfile:
+# the same, plus this folder's secrets and data (audio!), which must never
+# end up in the image.
+**/node_modules
+bundler
+gha-creds-*.json
+.git/
+*.log
+*.tmp
+deploy/.env
+deploy/.docker
+deploy/data
+deploy/backups
+web/dist
+server/js
+# Upstream's sentence collection (1.2 GB): scripted speech is not used
+server/data

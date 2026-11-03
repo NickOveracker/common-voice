@@ -438,6 +438,17 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       path: `${shots}/5c-review.png`,
       fullPage: true,
     })
+    // Anyone can report a problem to moderators
+    await reviewer
+      .locator('button:has-text("この録音について問題を報告する")')
+      .click()
+    await reviewer.getByLabel('どのような問題ですか').selectOption('consent')
+    await reviewer.getByLabel('詳細（任意）').fill(`家族の同意を確認したい ${RUN}`)
+    await reviewer.locator('button:has-text("モデレーターに送る")').click()
+    await reviewer
+      .locator('text=送信しました。ありがとうございます。')
+      .waitFor()
+    log('reviewer reported a consent concern')
     await reviewerContext.close()
 
     // The facilitator sees the reviews, and cannot review their own text
@@ -460,12 +471,29 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     })
     await kanaOwn.locator('text=以前の版').click()
     await kanaOwn.locator('.fork-review__history li').first().waitFor()
+
+    // Moderators (the facilitator is an admin) find reports from the home page
+    await page.goto(`${BASE}/ain`)
+    await page.locator('.fork-community-links a:has-text("報告")').click()
+    const report = page.locator('.fork-stories__card', {
+      has: page.locator(`text=家族の同意を確認したい ${RUN}`),
+    })
+    await report.waitFor()
+    await page.screenshot({ path: `${shots}/9-reports.png`, fullPage: true })
+    await report.getByLabel('対応の内容（任意）').fill(`家族に確認済み ${RUN}`)
+    await report.locator('button:has-text("対応済みにする")').click()
+    await report.waitFor({ state: 'detached' })
+    await page.locator('button:has-text("対応済み")').click()
+    await page.locator(`text=家族に確認済み ${RUN}`).waitFor()
+    log('facilitator resolved the report')
+    await page.goto(storyUrl)
+    await page.waitForSelector('.fork-transcribe__segment')
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({
       path: `${shots}/5b-transcribe.png`,
       fullPage: true,
     })
-    const storyPath = new URL(page.url()).pathname.replace(/^\/ain\//, '')
+    const storyPath = new URL(storyUrl).pathname.replace(/^\/ain\//, '')
 
     // Interface language switch keeps the contribution language in the URL
     await page.evaluate(() => localStorage.setItem('interface-locale', 'en'))
@@ -483,6 +511,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       [storyPath, TITLE],
       ['admin', 'Admin'],
       ['prompts', 'Story prompts'],
+      ['reports', 'Reports'],
     ]) {
       await page.goto(`${BASE}/ain/${path}`)
       await page

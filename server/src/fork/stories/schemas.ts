@@ -207,3 +207,25 @@ export const UpdatePromptRequest: AllowedSchema = {
     text_ain: nullableString(1000),
   },
 }
+
+export const CreateReportRequest: AllowedSchema = {
+  type: 'object',
+  required: ['reason'],
+  additionalProperties: false,
+  properties: {
+    reason: {
+      type: 'string',
+      enum: ['consent', 'sensitive', 'wrong_details', 'audio', 'other'],
+    },
+    comment: nullableString(5000),
+    segment_id: { type: ['integer', 'null'], minimum: 1 },
+  },
+}
+
+export const ResolveReportRequest: AllowedSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    resolution: nullableString(5000),
+  },
+}

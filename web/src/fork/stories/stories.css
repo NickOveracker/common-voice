@@ -322,3 +322,7 @@
 .fork-prompts h2 {
   margin-block-start: 2rem;
 }
+
+.fork-stories__card .fork-review__comment {
+  margin-block-start: 1rem;
+}

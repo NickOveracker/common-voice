@@ -7,14 +7,18 @@ import { getOwnRoles } from './stories/api'
 
 import './admin/admin.css'
 
-// The community's own pages, for the home page. The admin page is only
-// linked for admins.
+// The community's own pages, for the home page. Reports are only linked for
+// moderators, and the admin page for admins.
 const CommunityLinks = () => {
   const [isAdmin, setIsAdmin] = React.useState(false)
+  const [isModerator, setIsModerator] = React.useState(false)
 
   React.useEffect(() => {
     getOwnRoles()
-      .then(({ roles }) => setIsAdmin(roles.includes('admin')))
+      .then(({ roles }) => {
+        setIsAdmin(roles.includes('admin'))
+        setIsModerator(roles.includes('admin') || roles.includes('moderator'))
+      })
       .catch((): null => null)
   }, [])
 
@@ -32,6 +36,11 @@ const CommunityLinks = () => {
       <Localized id="fork-menu-speakers">
         <LinkButton rounded outline to={FORK_URLS.SPEAKERS} />
       </Localized>
+      {isModerator && (
+        <Localized id="fork-reports-title">
+          <LinkButton rounded outline to={FORK_URLS.REPORTS} />
+        </Localized>
+      )}
       {isAdmin && (
         <Localized id="fork-admin-title">
           <LinkButton rounded outline to={FORK_URLS.ADMIN} />

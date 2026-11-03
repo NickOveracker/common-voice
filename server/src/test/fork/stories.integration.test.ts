@@ -836,4 +836,71 @@ describeIntegration('stories API', () => {
       ['子どもの頃の遊び', 'rejected'],
     ])
   })
+
+  it('lets anyone report a problem, and moderators resolve it', async () => {
+    const [recording] = (await api(MEMBER, 'GET', '/recordings')).json
+    const segments = (
+      await api(MEMBER, 'GET', `/recordings/${recording.id}/segments`)
+    ).json
+
+    const reported = await api(
+      MEMBER,
+      'POST',
+      `/recordings/${recording.id}/reports`,
+      {
+        reason: 'consent',
+        comment: ' Not sure the family agreed ',
+        segment_id: segments[0]?.id ?? null,
+      }
+    )
+    expect(reported.status).toBe(201)
+    expect(
+      (
+        await api(MEMBER, 'POST', `/recordings/${recording.id}/reports`, {
+          reason: 'other',
+          segment_id: 999999,
+        })
+      ).status
+    ).toBe(400)
+
+    // Only moderators see and resolve reports
+    expect((await api(MEMBER, 'GET', '/reports')).status).toBe(403)
+    const open = (await api(FACILITATOR, 'GET', '/reports')).json
+    expect(open).toContainEqual(
+      expect.objectContaining({
+        id: reported.json.id,
+        recording_title: recording.title,
+        reason: 'consent',
+        comment: 'Not sure the family agreed',
+        reported_by: MEMBER.email,
+      })
+    )
+    expect(
+      (
+        await api(MEMBER, 'POST', `/reports/${reported.json.id}/resolve`, {
+          resolution: 'no',
+        })
+      ).status
+    ).toBe(403)
+    const resolved = await api(
+      FACILITATOR,
+      'POST',
+      `/reports/${reported.json.id}/resolve`,
+      { resolution: 'Asked the family: they agreed in 2019.' }
+    )
+    expect(resolved.status).toBe(204)
+    expect(
+      (await api(FACILITATOR, 'GET', '/reports')).json.map(
+        (r: { id: number }) => r.id
+      )
+    ).not.toContain(reported.json.id)
+    const done = (await api(FACILITATOR, 'GET', '/reports?status=resolved'))
+      .json
+    expect(done[0]).toMatchObject({
+      id: reported.json.id,
+      status: 'resolved',
+      resolution: 'Asked the family: they agreed in 2019.',
+      resolved_by: FACILITATOR.email,
+    })
+  })
 })

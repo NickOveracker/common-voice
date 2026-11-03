@@ -6,6 +6,8 @@ import { validateStrict } from '../../lib/validation'
 import {
   AddReviewRequest,
   CreatePromptRequest,
+  CreateReportRequest,
+  ResolveReportRequest,
   UpdatePromptRequest,
   AddTranscriptRequest,
   CompleteRecordingRequest,
@@ -28,6 +30,7 @@ import {
 } from './segments'
 import { addReview } from './reviews'
 import { createPrompt, listPrompts, updatePrompt } from './prompts'
+import { createReport, listReports, resolveReport } from './reports'
 import {
   addConsent,
   createSpeaker,
@@ -62,7 +65,14 @@ const requireSignedIn = (
 
 export default PromiseRouter({ mergeParams: true })
   .use(
-    ['/speakers', '/recordings', '/segments', '/transcripts', '/prompts'],
+    [
+      '/speakers',
+      '/recordings',
+      '/segments',
+      '/transcripts',
+      '/prompts',
+      '/reports',
+    ],
     requireSignedIn
   )
   .get('/speakers', listSpeakers)
@@ -139,4 +149,15 @@ export default PromiseRouter({ mergeParams: true })
     '/prompts/:promptId(\\d+)',
     validateStrict({ body: UpdatePromptRequest }),
     updatePrompt
+  )
+  .post(
+    '/recordings/:recordingId(\\d+)/reports',
+    validateStrict({ body: CreateReportRequest }),
+    createReport
+  )
+  .get('/reports', listReports)
+  .post(
+    '/reports/:reportId(\\d+)/resolve',
+    validateStrict({ body: ResolveReportRequest }),
+    resolveReport
   )

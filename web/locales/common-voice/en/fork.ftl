@@ -209,6 +209,29 @@ fork-new-field-prompt = Prompt (optional)
 fork-new-no-prompt = None
 fork-stories-prompt = Prompt:
 
+## Reports
+fork-report-open = Report a problem with this recording
+fork-report-title = Report a problem
+fork-report-intro = Moderators will see this. Use it for anything that needs their attention, for example if a speaker or their family may not have agreed to this being kept.
+fork-report-reason = What kind of problem?
+fork-report-reason-consent = Consent: the speaker or family may not agree
+fork-report-reason-sensitive = Something that shouldn't be shared
+fork-report-reason-wrong_details = Wrong details (speaker, date, place…)
+fork-report-reason-audio = Problem with the audio
+fork-report-reason-other = Something else
+fork-report-segment = Where
+fork-report-whole = The whole recording
+fork-report-comment = Details (optional)
+fork-report-send = Send to moderators
+fork-report-sent = Sent. Thank you.
+fork-reports-title = Reports
+fork-reports-open = Open
+fork-reports-resolved = Resolved
+fork-reports-none = No reports.
+fork-reports-resolution = What was done (optional)
+fork-reports-resolve = Mark as resolved
+fork-reports-resolved-by = Resolved by { $who }, { $when }: { $resolution }
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive
 

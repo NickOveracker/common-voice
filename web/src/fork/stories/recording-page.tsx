@@ -33,6 +33,7 @@ import {
 import { formatDuration, formatTime } from './format'
 import { RecordingLanguages } from './languages'
 import TranscriptField from './transcript-field'
+import ReportForm from './report-form'
 import { Player, PLAYBACK_RATES, SKIP_MS, usePlayer } from './player'
 
 import './stories.css'
@@ -639,6 +640,7 @@ const RecordingPage = () => {
             {formatDuration(recording.duration_ms)}
           </p>
           {recording.description && <p>{recording.description}</p>}
+          <ReportForm recordingId={recording.id} segments={segments ?? []} />
           {segments && segments.length > 0 ? (
             <Transcriber
               recording={recording}

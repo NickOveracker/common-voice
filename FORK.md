@@ -140,6 +140,11 @@ datasets with photos of other communities.
   and optionally Ainu. Anyone signed in suggests them; moderators approve or
   reject them, and their own are approved at once. A recording can name the
   approved prompt it answers (`prompt_id`).
+- Reports (`server/src/fork/stories/reports.ts`, `fork_reports`): anyone
+  signed in can report a problem with a recording or one of its segments
+  (consent, sensitive content, wrong details, audio, other). Moderators see
+  open reports on `/<locale>/reports` and resolve them with a note; what to
+  do about the recording is up to them.
 - Reviewers (and moderators and admins) mark the current version of a
   text as checked or needing work, with an optional comment
   (`POST /transcripts/:id/reviews`, `fork_transcript_reviews`). Nobody

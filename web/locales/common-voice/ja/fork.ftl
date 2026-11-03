@@ -206,6 +206,29 @@ fork-new-field-prompt = テーマ（任意）
 fork-new-no-prompt = なし
 fork-stories-prompt = テーマ：
 
+## Reports
+fork-report-open = この録音について問題を報告する
+fork-report-title = 問題を報告する
+fork-report-intro = モデレーターに届きます。対応が必要なことがあれば知らせてください。たとえば、話者やその家族が、この録音を残すことに同意していないかもしれない場合などです。
+fork-report-reason = どのような問題ですか
+fork-report-reason-consent = 同意：話者や家族が同意していないかもしれない
+fork-report-reason-sensitive = 共有すべきでない内容がある
+fork-report-reason-wrong_details = 情報の誤り（話者・日付・場所など）
+fork-report-reason-audio = 音声の問題
+fork-report-reason-other = その他
+fork-report-segment = 場所
+fork-report-whole = 録音全体
+fork-report-comment = 詳細（任意）
+fork-report-send = モデレーターに送る
+fork-report-sent = 送信しました。ありがとうございます。
+fork-reports-title = 報告
+fork-reports-open = 未対応
+fork-reports-resolved = 対応済み
+fork-reports-none = 報告はありません。
+fork-reports-resolution = 対応の内容（任意）
+fork-reports-resolve = 対応済みにする
+fork-reports-resolved-by = { $who } が対応（{ $when }）：{ $resolution }
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ
 

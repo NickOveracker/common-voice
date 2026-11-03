@@ -7,4 +7,5 @@ export default Object.freeze({
   SPEAKERS: '/speakers',
   PROMPTS: '/prompts',
   ADMIN: '/admin',
+  REPORTS: '/reports',
 })

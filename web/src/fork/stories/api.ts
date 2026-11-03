@@ -286,3 +286,46 @@ export const updatePrompt = (
   id: number,
   changes: Partial<Pick<Prompt, 'status' | 'text_ja' | 'text_ain'>>
 ) => request<null>('PATCH', `/prompts/${id}`, changes)
+
+export const REPORT_REASONS = [
+  'consent',
+  'sensitive',
+  'wrong_details',
+  'audio',
+  'other',
+] as const
+export type ReportReason = typeof REPORT_REASONS[number]
+
+export type Report = {
+  id: number
+  recording_id: number
+  recording_title: string
+  segment_id: number | null
+  segment_start_ms: number | null
+  segment_end_ms: number | null
+  reason: ReportReason
+  comment: string | null
+  status: 'open' | 'resolved'
+  resolution: string | null
+  reported_by: string | null
+  resolved_by: string | null
+  created_at: string
+  resolved_at: string | null
+}
+
+export const createReport = (
+  recordingId: number,
+  report: {
+    reason: ReportReason
+    comment: string | null
+    segment_id: number | null
+  }
+) =>
+  request<{ id: number }>('POST', `/recordings/${recordingId}/reports`, report)
+export const listReports = (status: Report['status'] = 'open') =>
+  request<Report[]>(
+    'GET',
+    `/reports${status === 'resolved' ? '?status=resolved' : ''}`
+  )
+export const resolveReport = (id: number, resolution: string | null) =>
+  request<null>('POST', `/reports/${id}/resolve`, { resolution })

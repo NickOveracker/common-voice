@@ -6,6 +6,7 @@ import { validateStrict } from '../../lib/validation'
 import {
   AddReviewRequest,
   CreatePromptRequest,
+  CreateExportRequest,
   CreateDialectRequest,
   MergeDialectRequest,
   CreateReportRequest,
@@ -40,6 +41,12 @@ import {
   renameDialect,
 } from './dialects'
 import { requireRole } from '../roles'
+import {
+  createExport,
+  deleteExport,
+  downloadExport,
+  listExports,
+} from './exports'
 import {
   addConsent,
   createSpeaker,
@@ -82,6 +89,7 @@ export default PromiseRouter({ mergeParams: true })
       '/prompts',
       '/reports',
       '/dialects',
+      '/exports',
     ],
     requireSignedIn
   )
@@ -189,3 +197,8 @@ export default PromiseRouter({ mergeParams: true })
     validateStrict({ body: MergeDialectRequest }),
     mergeDialect
   )
+  .use('/exports', requireRole('admin'))
+  .get('/exports', listExports)
+  .post('/exports', validateStrict({ body: CreateExportRequest }), createExport)
+  .get('/exports/:exportId(\\d+)/download', downloadExport)
+  .delete('/exports/:exportId(\\d+)', deleteExport)

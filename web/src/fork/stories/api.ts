@@ -359,3 +359,42 @@ export const renameDialect = (id: number, name: string) =>
   request<null>('PATCH', `/dialects/${id}`, { name })
 export const mergeDialect = (id: number, intoId: number) =>
   request<null>('POST', `/dialects/${id}/merge`, { into_id: intoId })
+
+// Exports of the archive, for admins
+export const EXPORT_PURPOSES = [
+  'archive',
+  'community_use',
+  'research',
+  'speech_technology',
+] as const
+export type ExportPurpose = typeof EXPORT_PURPOSES[number]
+export type ExportAudio = 'none' | 'recordings' | 'segments'
+
+export type ArchiveExport = {
+  id: number
+  purpose: ExportPurpose
+  audio: ExportAudio
+  only_checked: boolean
+  status: 'queued' | 'building' | 'ready' | 'failed' | 'deleted'
+  recordings: number | null
+  segments: number | null
+  speakers: number | null
+  size_bytes: number | null
+  error: string | null
+  created_by: string | null
+  deleted_by: string | null
+  created_at: string
+  finished_at: string | null
+  deleted_at: string | null
+}
+
+export const listExports = () => request<ArchiveExport[]>('GET', '/exports')
+export const createExport = (options: {
+  purpose: ExportPurpose
+  audio: ExportAudio
+  only_checked: boolean
+}) => request<null>('POST', '/exports', options)
+export const deleteExport = (id: number) =>
+  request<null>('DELETE', `/exports/${id}`)
+export const exportDownloadUrl = (id: number) =>
+  `${BASE}/exports/${id}/download`

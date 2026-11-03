@@ -535,6 +535,38 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.locator('button:has-text("対応済み")').click()
     await page.locator(`text=家族に確認済み ${RUN}`).waitFor()
     log('facilitator resolved the report')
+
+    // Admins export for a purpose; the test speaker consented to research
+    await page.goto(`${BASE}/ain`)
+    await page.locator('.fork-community-links a:has-text("書き出し")').click()
+    // Purpose, then audio
+    const exportForm = page.locator('.fork-stories__form')
+    await exportForm.locator('select').nth(0).selectOption('research')
+    await exportForm.locator('select').nth(1).selectOption('segments')
+    // Wait for this run's export to appear before using it: earlier runs'
+    // exports are listed too
+    const exportCards = page.locator('.fork-stories__card')
+    await page.waitForLoadState('networkidle')
+    const before = await exportCards.count()
+    await page.click('button:has-text("書き出す")')
+    await page.waitForFunction(
+      n => document.querySelectorAll('.fork-stories__card').length === n,
+      before + 1
+    )
+    const exportCard = exportCards.first()
+    await exportCard.locator('text=完了').waitFor({ timeout: 120000 })
+    const contents = await exportCard.locator('p').nth(2).innerText()
+    log(`research export ready: ${contents}`)
+    const href = await exportCard
+      .locator('a:has-text("ダウンロード")')
+      .getAttribute('href')
+    const zip = await page.request.get(new URL(href, BASE).toString())
+    const bytes = await zip.body()
+    if (bytes.subarray(0, 2).toString() !== 'PK') {
+      throw new Error('export is not a zip file')
+    }
+    log(`downloaded the export: ${bytes.length} bytes`)
+    await page.screenshot({ path: `${shots}/10-exports.png`, fullPage: true })
     await page.goto(storyUrl)
     await page.waitForSelector('.fork-transcribe__segment')
     await page.evaluate(() => window.scrollTo(0, 0))
@@ -561,6 +593,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       ['admin', 'Admin'],
       ['prompts', 'Story prompts'],
       ['reports', 'Reports'],
+      ['exports', 'Export'],
     ]) {
       await page.goto(`${BASE}/ain/${path}`)
       await page

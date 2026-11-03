@@ -250,6 +250,37 @@ fork-dialects-merge = まとめる
 fork-dialects-merge-confirm = 「{ $from }」を「{ $into }」にまとめますか？ 話者と録音は「{ $into }」に移ります。この画面では元に戻せません。
 fork-dialects-name-taken = 「{ $name }」はすでにあります。ひとつにするには、まとめてください。
 
+## Exports
+fork-exports-title = 書き出し
+fork-exports-intro = アーカイブを zip ファイルとしてダウンロードします。録音・話者・区間（書き起こし、翻訳、その確認）の表と、必要なら音声を含みます。書き出す時点で、すべての話者が選んだ目的に同意している録音だけが入ります。本名とメモは含みません。書き出しの記録はすべてここに残ります。
+fork-exports-new = 新しい書き出し
+fork-exports-purpose = 目的
+fork-exports-purpose-archive = アーカイブの保存（複製）
+fork-exports-purpose-community_use = コミュニティ内での利用（教育・行事など）
+fork-exports-purpose-research = 研究
+fork-exports-purpose-speech_technology = 音声技術の開発
+fork-exports-purpose-archive-note = 保存に同意した話者の録音です。話者の表示名を含みます。
+fork-exports-purpose-community_use-note = コミュニティ内での利用に同意した話者の録音です。話者の表示名を含みます。
+fork-exports-purpose-research-note = 研究に同意した話者の録音です。話者は記号（S00001 など）だけで示します。
+fork-exports-purpose-speech_technology-note = 音声技術の開発に同意した話者の録音です。話者は記号（S00001 など）だけで示します。
+fork-exports-audio = 音声
+fork-exports-audio-none = 音声なし（表のみ）
+fork-exports-audio-recordings = 元の録音ファイル
+fork-exports-audio-segments = 区間ごとの音声（WAV、16 kHz）
+fork-exports-only-checked = 確認担当が確認済みにした書き起こし・翻訳だけを含める
+fork-exports-only-checked-short = 確認済みのみ
+fork-exports-create = 書き出す
+fork-exports-status-queued = 開始を待っています…
+fork-exports-status-building = 作成中です…音声を含む場合は時間がかかります。
+fork-exports-status-ready = 完了
+fork-exports-status-failed = 失敗しました
+fork-exports-status-deleted = 削除済み
+fork-exports-contents = 録音 { $recordings } · 話者 { $speakers } · 区間 { $segments } · { $size }
+fork-exports-download = ダウンロード
+fork-exports-delete = ファイルを削除
+fork-exports-delete-confirm = この書き出しのファイルを削除しますか？ 書き出した記録は残ります。
+fork-exports-deleted-by = { $who } が削除（{ $when }）
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ
 

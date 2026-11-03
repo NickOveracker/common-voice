@@ -259,3 +259,18 @@ export const MergeDialectRequest: AllowedSchema = {
     into_id: { type: 'integer', minimum: 1 },
   },
 }
+
+export const CreateExportRequest: AllowedSchema = {
+  type: 'object',
+  required: ['purpose', 'audio'],
+  additionalProperties: false,
+  properties: {
+    purpose: {
+      type: 'string',
+      enum: ['archive', 'community_use', 'research', 'speech_technology'],
+    },
+    audio: { type: 'string', enum: ['none', 'recordings', 'segments'] },
+    // Only transcriptions and translations a reviewer has checked
+    only_checked: { type: 'boolean' },
+  },
+}

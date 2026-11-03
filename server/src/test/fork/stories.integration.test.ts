@@ -653,7 +653,17 @@ describeIntegration('stories API', () => {
   })
 
   it('blocks new recordings once consent is withdrawn', async () => {
+    // A newer consent replaces the first; withdrawing it must not bring the
+    // first one back
+    await api(FACILITATOR, 'POST', `/speakers/${speakerId}/consents`, {
+      archive: true,
+      community_use: false,
+      research: false,
+      speech_technology: false,
+      method: 'recorded_statement',
+    })
     const speaker = await api(FACILITATOR, 'GET', `/speakers/${speakerId}`)
+    expect(speaker.json.consent_history).toHaveLength(2)
     const withdraw = await api(
       FACILITATOR,
       'POST',
@@ -669,6 +679,9 @@ describeIntegration('stories API', () => {
     })
     expect(refused.status).toBe(400)
     expect(refused.json.message).toMatch(/consent/)
+    expect(
+      (await api(FACILITATOR, 'GET', `/speakers/${speakerId}`)).json.consent
+    ).toBeNull()
   })
   it('imports only the configured locales', async () => {
     process.env.CV_LOCALES = 'en,ja,ain'
@@ -1016,4 +1029,205 @@ describeIntegration('stories API', () => {
       (await api(MEMBER, 'GET', `/speakers/${speaker.json.id}`)).json.dialects
     ).toEqual([])
   })
+
+  it('exports only what speakers consented to, for admins', async () => {
+    const { STORAGE_LOCAL_DEVELOPMENT_ENDPOINT } = getConfig()
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'export-test-'))
+
+    const speakerWith = async (name: string, research: boolean) => {
+      const created = await api(FACILITATOR, 'POST', '/speakers', {
+        display_name: name,
+        full_name: `${name} (real name)`,
+      })
+      await api(FACILITATOR, 'POST', `/speakers/${created.json.id}/consents`, {
+        archive: true,
+        community_use: true,
+        research,
+        speech_technology: false,
+        method: 'signed_form',
+      })
+      return created.json.id
+    }
+    // D consents to research, E only to the archive and community use
+    const speakerD = await speakerWith('Elder D', true)
+    const speakerE = await speakerWith('Elder E', false)
+
+    const audio = path.join(dir, 'tone.webm')
+    execFileSync('ffmpeg', [
+      '-loglevel',
+      'error',
+      '-f',
+      'lavfi',
+      '-i',
+      'aevalsrc=if(lt(mod(t\\,5)\\,4)\\,0.5*sin(2*PI*330*t)\\,0):d=9',
+      '-c:a',
+      'libopus',
+      audio,
+    ])
+    const recordingOf = async (title: string, speakerIds: number[]) => {
+      const created = await api(FACILITATOR, 'POST', '/recordings', {
+        title,
+        languages: ['ain'],
+        speaker_ids: speakerIds,
+        source: 'upload',
+        original_filename: 'tone.webm',
+      })
+      const id = created.json.id
+      await api(
+        FACILITATOR,
+        'PUT',
+        `/recordings/${id}/chunks/0`,
+        undefined,
+        fs.readFileSync(audio)
+      )
+      await api(FACILITATOR, 'POST', `/recordings/${id}/complete`, {
+        chunk_count: 1,
+      })
+      for (let attempt = 0; attempt < 60; attempt++) {
+        const { status } = (await api(MEMBER, 'GET', `/recordings/${id}`)).json
+        if (status === 'ready') break
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      return id
+    }
+    const onlyD = await recordingOf('Research ok', [speakerD])
+    const both = await recordingOf('Not for research', [speakerD, speakerE])
+
+    // One checked and one unchecked text on onlyD
+    const [segment] = (
+      await api(MEMBER, 'GET', `/recordings/${onlyD}/segments`)
+    ).json
+    const latin = await api(
+      MEMBER,
+      'POST',
+      `/segments/${segment.id}/transcripts`,
+      { kind: 'transcription_latin', text: 'sinep', base_id: null }
+    )
+    await api(FACILITATOR, 'POST', `/transcripts/${latin.json.id}/reviews`, {
+      verdict: 'approved',
+    })
+    await api(MEMBER, 'POST', `/segments/${segment.id}/transcripts`, {
+      kind: 'translation_ja',
+      text: 'ひとつ',
+      base_id: null,
+    })
+
+    const build = async (options: object) => {
+      const created = await api(FACILITATOR, 'POST', '/exports', options)
+      expect(created.status).toBe(202)
+      let row
+      for (let attempt = 0; attempt < 120; attempt++) {
+        row = (await api(FACILITATOR, 'GET', '/exports')).json.find(
+          (e: { id: number }) => e.id === created.json.id
+        )
+        if (row.status === 'ready' || row.status === 'failed') break
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      expect(row).toMatchObject({ status: 'ready', error: null })
+      const link = await api(FACILITATOR, 'GET', `/exports/${row.id}/download`)
+      expect(link.status).toBe(302)
+      const zip = path.join(dir, `${row.id}.zip`)
+      fs.writeFileSync(
+        zip,
+        Buffer.from(
+          await (
+            await fetch(
+              link.headers
+                .get('location')
+                .replace(
+                  /^https?:\/\/[^/]+/,
+                  STORAGE_LOCAL_DEVELOPMENT_ENDPOINT
+                )
+            )
+          ).arrayBuffer()
+        )
+      )
+      const out = path.join(dir, String(row.id))
+      execFileSync('unzip', ['-q', '-o', zip, '-d', out])
+      const read = (name: string) =>
+        fs
+          .readFileSync(path.join(out, name), 'utf8')
+          .replace(new RegExp('^\\ufeff'), '') // byte order mark
+      return { row, out, read }
+    }
+    const code = (prefix: string, id: number) =>
+      `${prefix}${String(id).padStart(5, '0')}`
+
+    // Only admins export
+    expect(
+      (
+        await api(MEMBER, 'POST', '/exports', {
+          purpose: 'research',
+          audio: 'none',
+        })
+      ).status
+    ).toBe(403)
+    expect((await api(MEMBER, 'GET', '/exports')).status).toBe(403)
+
+    // Research: only onlyD; speakers by code; a clip per segment
+    const research = await build({ purpose: 'research', audio: 'segments' })
+    const recordingsCsv = research.read('recordings.csv')
+    expect(recordingsCsv).toContain(code('R', onlyD))
+    expect(recordingsCsv).not.toContain(code('R', both))
+    expect(recordingsCsv).not.toContain('With pauses') // consent withdrawn
+    const speakersCsv = research.read('speakers.csv')
+    expect(speakersCsv.split('\r\n')[0]).not.toContain('display_name')
+    expect(speakersCsv).not.toContain('Elder D')
+    expect(speakersCsv).not.toContain('real name')
+    expect(speakersCsv).toContain(code('S', speakerD))
+    expect(speakersCsv).not.toContain(code('S', speakerE))
+    const segmentsCsv = research.read('segments.csv')
+    expect(segmentsCsv).toContain('"sinep","approved"')
+    expect(segmentsCsv).toContain('"ひとつ",""')
+    const clips = fs.readdirSync(path.join(research.out, 'clips'))
+    expect(clips.length).toBe(research.row.segments)
+    expect(clips[0]).toMatch(new RegExp(`^${code('R', onlyD)}_0001\\.wav$`))
+    expect(research.read('README.txt')).toContain('research')
+
+    // Archive: both recordings, display names, originals; only checked text
+    const archive = await build({
+      purpose: 'archive',
+      audio: 'recordings',
+      only_checked: true,
+    })
+    expect(archive.read('recordings.csv')).toContain(code('R', both))
+    expect(archive.read('speakers.csv')).toContain('Elder E')
+    expect(archive.read('speakers.csv')).not.toContain('real name')
+    expect(archive.read('segments.csv')).toContain('"sinep","approved"')
+    expect(archive.read('segments.csv')).not.toContain('ひとつ')
+    expect(
+      fs
+        .readFileSync(
+          path.join(archive.out, 'audio', `${code('R', onlyD)}.webm`)
+        )
+        .equals(fs.readFileSync(audio))
+    ).toBe(true)
+
+    // Withdrawn consent leaves the recording out of the next export
+    const d = (await api(FACILITATOR, 'GET', `/speakers/${speakerD}`)).json
+    await api(
+      FACILITATOR,
+      'POST',
+      `/speakers/${speakerD}/consents/${d.consent.id}/withdraw`
+    )
+    const after = await build({ purpose: 'research', audio: 'none' })
+    expect(after.row.recordings).toBe(0)
+
+    // Deleting removes the file, not the record
+    expect(
+      (await api(FACILITATOR, 'DELETE', `/exports/${research.row.id}`)).status
+    ).toBe(204)
+    expect(
+      (await api(FACILITATOR, 'GET', `/exports/${research.row.id}/download`))
+        .status
+    ).toBe(404)
+    const deleted = (await api(FACILITATOR, 'GET', '/exports')).json.find(
+      (e: { id: number }) => e.id === research.row.id
+    )
+    expect(deleted).toMatchObject({
+      status: 'deleted',
+      deleted_by: FACILITATOR.email,
+    })
+    // Builds three exports
+  }, 120_000)
 })

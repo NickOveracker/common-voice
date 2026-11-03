@@ -67,24 +67,28 @@ export async function canManageSpeaker(
   )
 }
 
-// The consent that applies now: the latest one that hasn't been withdrawn.
+// The consent that applies now: the latest record, unless it was withdrawn.
 export async function currentConsents(
   speakerIds: number[]
 ): Promise<Map<number, Consent>> {
   const consents = new Map<number, Consent>()
   if (speakerIds.length === 0) return consents
 
+  // The latest record decides. If it was withdrawn there is no consent:
+  // withdrawing must not bring back an older record.
   const [rows] = await db.query(
     `
     SELECT c.* FROM fork_consents c
-    WHERE c.speaker_id IN (?) AND c.withdrawn_at IS NULL
+    WHERE c.speaker_id IN (?)
     ORDER BY c.created_at DESC, c.id DESC
     `,
     [speakerIds]
   )
+  const seen = new Set<number>()
   for (const row of rows) {
-    if (!consents.has(row.speaker_id))
-      consents.set(row.speaker_id, toConsent(row))
+    if (seen.has(row.speaker_id)) continue
+    seen.add(row.speaker_id)
+    if (!row.withdrawn_at) consents.set(row.speaker_id, toConsent(row))
   }
   return consents
 }

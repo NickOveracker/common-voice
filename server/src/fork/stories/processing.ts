@@ -15,6 +15,7 @@ import {
 } from './storage'
 import { detectPauses, planSegments } from './segmentation'
 import { withTransaction } from './transaction'
+import { buildExport } from './export-builder'
 
 // Joins the uploaded chunks of a recording, keeps the joined file as the
 // original, and makes an MP3 copy for playback. Recordings can be hours long,
@@ -23,6 +24,7 @@ import { withTransaction } from './transaction'
 const QUEUE_NAME = 'fork-recording-processing'
 const JOB_NAME = 'process-recording'
 const DETECT_JOB_NAME = 'detect-segments'
+const EXPORT_JOB_NAME = 'build-export'
 
 const db = getMySQLInstance()
 
@@ -37,6 +39,8 @@ export function setupRecordingProcessingQueue() {
   queue.process(DETECT_JOB_NAME, 1, job =>
     detectSegmentsAgain(job.data.recordingId)
   )
+  // recordingId holds the export's id here
+  queue.process(EXPORT_JOB_NAME, 1, job => buildExport(job.data.recordingId))
   queue.on('failed', (job, error) =>
     console.error(
       `[recordings] processing ${job.data.recordingId} failed`,
@@ -51,6 +55,15 @@ export async function queueRecordingProcessing(recordingId: number) {
     JOB_NAME,
     { recordingId },
     { attempts: 3, backoff: { type: 'exponential', delay: 60_000 } }
+  )
+}
+
+export async function queueExport(exportId: number) {
+  if (!queue) throw new Error('recording processing queue is not set up')
+  await queue.add(
+    EXPORT_JOB_NAME,
+    { recordingId: exportId },
+    { attempts: 2, backoff: { type: 'exponential', delay: 60_000 } }
   )
 }
 

@@ -1,3 +1,4 @@
+import { Storage } from '@google-cloud/storage'
 import { taskEither as TE } from 'fp-ts'
 import { pipe } from 'fp-ts/function'
 import { Readable } from 'stream'
@@ -31,6 +32,8 @@ export const originalPath = (recordingId: number) =>
 export const playbackPath = (recordingId: number) =>
   `${PREFIX}/${recordingId}/playback.mp3`
 
+export const exportPath = (exportId: number) => `fork-exports/${exportId}.zip`
+
 export const putObject = (path: string, data: Buffer) =>
   run(uploadToBucket(bucket())(path)(data))
 
@@ -54,4 +57,23 @@ export async function getAudioUrl(path: string): Promise<string> {
     )}?alt=media`
   }
   return run(getSignedUrlFromBucket(bucket())(path))
+}
+
+let client: Storage | null = null
+
+// Downloads straight to a file: originals can be gigabytes, too big for the
+// in-memory download the upstream storage helpers do. Same client settings
+// as infrastructure/storage/storage.ts.
+export async function downloadToFile(path: string, destination: string) {
+  if (!client) {
+    client =
+      getConfig().ENVIRONMENT === 'local'
+        ? new Storage({
+            apiEndpoint: getConfig().STORAGE_LOCAL_DEVELOPMENT_ENDPOINT,
+            projectId: 'local',
+            useAuthWithCustomEndpoint: false,
+          })
+        : new Storage()
+  }
+  await client.bucket(bucket()).file(path).download({ destination })
 }

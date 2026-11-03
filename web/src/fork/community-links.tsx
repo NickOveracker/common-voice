@@ -46,6 +46,11 @@ const CommunityLinks = () => {
           <LinkButton rounded outline to={FORK_URLS.ADMIN} />
         </Localized>
       )}
+      {isAdmin && (
+        <Localized id="fork-exports-title">
+          <LinkButton rounded outline to={FORK_URLS.EXPORTS} />
+        </Localized>
+      )}
     </div>
   )
 }

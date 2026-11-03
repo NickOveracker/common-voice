@@ -8,4 +8,5 @@ export default Object.freeze({
   PROMPTS: '/prompts',
   ADMIN: '/admin',
   REPORTS: '/reports',
+  EXPORTS: '/exports',
 })

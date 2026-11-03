@@ -253,6 +253,37 @@ fork-dialects-merge = Merge
 fork-dialects-merge-confirm = Merge “{ $from }” into “{ $into }”? Its speakers and recordings will move to “{ $into }”. This can't be undone here.
 fork-dialects-name-taken = “{ $name }” already exists. To make them one, merge instead.
 
+## Exports
+fork-exports-title = Export
+fork-exports-intro = Download the archive as a zip, with tables of recordings, speakers and segments (transcriptions, translations and their reviews), and optionally audio. Each export includes only recordings whose every speaker consents, at the time of export, to the purpose you choose. Real names and notes are never included. Every export stays on record here.
+fork-exports-new = New export
+fork-exports-purpose = What it is for
+fork-exports-purpose-archive = Keeping a copy of the archive
+fork-exports-purpose-community_use = Community use (teaching, events)
+fork-exports-purpose-research = Research
+fork-exports-purpose-speech_technology = Speech technology
+fork-exports-purpose-archive-note = Recordings whose speakers agreed to their keeping. Speakers' display names are included.
+fork-exports-purpose-community_use-note = Recordings whose speakers agreed to community use. Speakers' display names are included.
+fork-exports-purpose-research-note = Recordings whose speakers agreed to research. Speakers appear only as codes (S00001…).
+fork-exports-purpose-speech_technology-note = Recordings whose speakers agreed to speech technology. Speakers appear only as codes (S00001…).
+fork-exports-audio = Audio
+fork-exports-audio-none = No audio (tables only)
+fork-exports-audio-recordings = Original recordings
+fork-exports-audio-segments = A clip for each segment (WAV, 16 kHz)
+fork-exports-only-checked = Only transcriptions and translations a reviewer has checked
+fork-exports-only-checked-short = only checked text
+fork-exports-create = Create export
+fork-exports-status-queued = Waiting to start…
+fork-exports-status-building = Being built… Exports with audio take a while.
+fork-exports-status-ready = Ready
+fork-exports-status-failed = Failed
+fork-exports-status-deleted = Deleted
+fork-exports-contents = { $recordings } recordings · { $speakers } speakers · { $segments } segments · { $size }
+fork-exports-download = Download
+fork-exports-delete = Delete the file
+fork-exports-delete-confirm = Delete this export's file? The record that it was made stays.
+fork-exports-deleted-by = Deleted by { $who }, { $when }
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive
 

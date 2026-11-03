@@ -102,8 +102,9 @@ datasets with photos of other communities.
   created the speaker, the speaker themselves, and moderators.
 - Consent is recorded per speaker (archive, community use, research, speech
   technology; how and when it was given). It is never edited: changes add a
-  new record, and withdrawal is marked on it. Recording a speaker needs
-  current consent to archive.
+  new record, and withdrawal is marked on it. The latest record applies; if
+  it was withdrawn, there is no consent (an older record does not come
+  back). Recording a speaker needs current consent to archive.
 - Dialects (`server/src/fork/stories/dialects.ts`, `fork_dialects`):
   speakers say what they speak, so anyone signed in adds a dialect without
   approval. A name that matches an existing entry, ignoring case, width and
@@ -164,6 +165,28 @@ datasets with photos of other communities.
 - The page plays a segment and stops at its end (or loops it), skips 5 s,
   and slows down to 0.5×. Esc plays or pauses the segment being typed in,
   except while an input method is composing.
+
+## Exports
+
+`server/src/fork/stories/export-builder.ts` and `exports.ts`; page
+`/<locale>/exports` (admins only, linked from the home page).
+
+- An export is for one purpose: archive, community use, research or speech
+  technology. It includes a recording only if every one of its speakers
+  currently consents to that purpose, so withdrawn consent leaves it out
+  of later exports. Export again after consent changes: existing files are
+  not updated.
+- The zip holds `README.txt` (Japanese and English), `recordings.csv`,
+  `speakers.csv` and `segments.csv` (UTF-8 with a byte order mark, for
+  Excel), and optionally the original recordings (`audio/`) or a 16 kHz
+  mono WAV clip per segment (`clips/`). Speakers are `S00001`, recordings
+  `R00001`. Real names and notes are never included; display names only for
+  the archive and community use. "Only checked" leaves out transcriptions
+  and translations no reviewer has approved.
+- Exports are built by the processing queue (`build-export`) into a
+  temporary folder (originals are streamed to disk, see `downloadToFile`)
+  and stored as `fork-exports/<id>.zip`. Every export stays on record in
+  `fork_exports`; deleting one removes the file only.
 
 ## Tests
 

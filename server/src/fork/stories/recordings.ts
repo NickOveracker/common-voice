@@ -4,7 +4,13 @@ import { getMySQLInstance } from '../../lib/model/db/mysql'
 import { getForkConfig } from '../config'
 import { hasRole } from '../roles'
 import { canManageSpeaker, currentConsents } from './speakers'
-import { chunkPath, getAudioUrl, putObject } from './storage'
+import {
+  chunkPath,
+  getAudioUrl,
+  putObject,
+  streamObject,
+  streamsThroughApp,
+} from './storage'
 import { queueRecordingProcessing } from './processing'
 import { emptyCounts, Progress, segmentProgress } from './segments'
 import { isApprovedPrompt, promptsById } from './prompts'
@@ -422,8 +428,9 @@ export const completeRecording = async (
   response.sendStatus(StatusCodes.ACCEPTED)
 }
 
-// Redirects to a short-lived URL for the playback copy, or for the original
-// file (?original=true) for those who manage the recording.
+// The playback copy, or the original file (?original=true) for those who
+// manage the recording: streamed when files are on the server's own disk,
+// otherwise a redirect to a short-lived link.
 export const getRecordingAudio = async (
   request: Request,
   response: Response
@@ -435,14 +442,28 @@ export const getRecordingAudio = async (
   }
 
   const [[paths]] = await db.query(
-    `SELECT original_path, playback_path FROM fork_recordings WHERE id = ?`,
+    `SELECT original_path, playback_path, original_mime, original_filename FROM fork_recordings WHERE id = ?`,
     [recording.id]
   )
-  if (request.query.original === 'true') {
-    if (!(await canManageRecording(user, recording))) {
-      return response.sendStatus(StatusCodes.FORBIDDEN)
-    }
-    return response.redirect(await getAudioUrl(paths.original_path))
+  const original = request.query.original === 'true'
+  if (original && !(await canManageRecording(user, recording))) {
+    return response.sendStatus(StatusCodes.FORBIDDEN)
   }
-  response.redirect(await getAudioUrl(paths.playback_path))
+  const path = original ? paths.original_path : paths.playback_path
+
+  if (!streamsThroughApp()) return response.redirect(await getAudioUrl(path))
+  await streamObject(
+    path,
+    request,
+    response,
+    original
+      ? {
+          contentType: paths.original_mime || 'application/octet-stream',
+          // Only ASCII in the header; the original name may be Japanese
+          downloadName: `recording-${recording.id}${
+            (paths.original_filename?.match(/\.[A-Za-z0-9]{1,5}$/) ?? [''])[0]
+          }`,
+        }
+      : { contentType: 'audio/mpeg' }
+  )
 }

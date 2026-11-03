@@ -19,9 +19,14 @@ const ReportsPage = lazyWithRetry(() => import('./stories/reports-page'))
 const ExportsPage = lazyWithRetry(() => import('./admin/exports-page'))
 
 // Upstream pages that are hidden on private instances. They link to public
-// datasets, donations, Mozilla's own content or language requests.
+// datasets, donations, Mozilla's own content or language requests, or are
+// upstream's scripted speech, which this archive doesn't use.
 // See also visible-menu-items.ts.
 const HIDDEN_PAGES = [
+  URLS.SPEAK,
+  URLS.LISTEN,
+  URLS.WRITE,
+  URLS.REVIEW,
   URLS.ABOUT,
   URLS.FAQ,
   URLS.PARTNER,
@@ -97,6 +102,12 @@ export function privateInstanceRoutes(
       exact
       path={toLocaleRoute(FORK_URLS.SPEAKERS)}
       component={SpeakersPage}
+    />,
+    // Scripted speech statistics, goals and awards, under /dashboard/…
+    <Route
+      key="dashboard"
+      path={toLocaleRoute(URLS.DASHBOARD)}
+      render={() => <Redirect to={toLocaleRoute(URLS.ROOT)} />}
     />,
     ...HIDDEN_PAGES.map(path => (
       <Route

@@ -37,8 +37,8 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     if (
       ![
         'localhost:9000',
+        // Not the storage service: audio and exports come through the app
         'cvfork-keycloak:8080',
-        'cvfork-storage:8080',
       ].includes(host)
     ) {
       external.add(host)
@@ -259,6 +259,31 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     if (audio < 6.5 || audio > 9.5)
       throw new Error(`unexpected duration ${audio}`)
     await page.screenshot({ path: `${shots}/5-stories.png`, fullPage: true })
+
+    // Audio comes through the app, in ranges, so long recordings can be
+    // seeked without downloading them whole
+    const ranged = await page.evaluate(async () => {
+      const src = document.querySelector('audio').getAttribute('src')
+      const part = await fetch(src, { headers: { Range: 'bytes=100-199' } })
+      const whole = await fetch(src)
+      return {
+        status: part.status,
+        length: (await part.arrayBuffer()).byteLength,
+        range: part.headers.get('content-range'),
+        url: whole.url,
+      }
+    })
+    log(
+      `audio range request: ${ranged.status} ${ranged.range}, ${
+        ranged.length
+      } bytes, from ${new URL(ranged.url).host}`
+    )
+    if (ranged.status !== 206 || ranged.length !== 100) {
+      throw new Error('audio does not support range requests')
+    }
+    if (new URL(ranged.url).host !== 'localhost:9000') {
+      throw new Error('audio was not served by the app')
+    }
 
     // Transcribing: segments found at pauses, played one at a time
     await card.locator('a:has-text("書き起こし・翻訳")').click()

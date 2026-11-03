@@ -1,5 +1,4 @@
 import { menuItems } from '../components/layout/nav/menu-items'
-import URLS from '../urls'
 import FORK_URLS from './urls'
 
 const loadVisibleMenuItems = (privateInstance: boolean) => {
@@ -22,19 +21,15 @@ describe('visibleMenuItems', () => {
 
   it('hides Mozilla menus and external links on private instances', () => {
     const visible = loadVisibleMenuItems(true)(menuItems)
-    expect(Object.keys(visible)).toEqual(['speak', 'listen', 'write'])
+    expect(Object.keys(visible)).toEqual(['speak', 'listen'])
 
     const items = Object.values(visible).flatMap(menu => menu.items)
     expect(items.some(item => item.externalHref)).toBe(false)
     expect(items.map(item => item.internalHref)).toEqual([
-      URLS.SPEAK,
       FORK_URLS.STORIES_NEW,
       FORK_URLS.PROMPTS,
       FORK_URLS.SPEAKERS,
-      URLS.LISTEN,
       FORK_URLS.STORIES,
-      URLS.WRITE,
-      URLS.REVIEW,
     ])
   })
 })

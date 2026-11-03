@@ -2,7 +2,12 @@ import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { getMySQLInstance } from '../../lib/model/db/mysql'
 import { queueExport } from './processing'
-import { deleteObject, getAudioUrl } from './storage'
+import {
+  deleteObject,
+  getAudioUrl,
+  streamObject,
+  streamsThroughApp,
+} from './storage'
 
 // Exports of the archive, for admins (the routes require the admin role).
 // They are built in the background (export-builder.ts); every export stays
@@ -45,14 +50,20 @@ export const listExports = async (_request: Request, response: Response) => {
   )
 }
 
-// Redirects to a short-lived link to the zip
+// The zip: streamed when files are on the server's own disk, otherwise a
+// redirect to a short-lived link
 export const downloadExport = async (request: Request, response: Response) => {
   const [[row]] = await db.query(
     `SELECT path FROM fork_exports WHERE id = ? AND status = 'ready'`,
     [Number(request.params.exportId)]
   )
   if (!row) return response.sendStatus(StatusCodes.NOT_FOUND)
-  response.redirect(await getAudioUrl(row.path))
+  if (!streamsThroughApp())
+    return response.redirect(await getAudioUrl(row.path))
+  await streamObject(row.path, request, response, {
+    contentType: 'application/zip',
+    downloadName: `ainu-voice-export-${request.params.exportId}.zip`,
+  })
 }
 
 // Deletes the file; the record of the export stays

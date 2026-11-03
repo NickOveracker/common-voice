@@ -40,7 +40,7 @@ migrations that are older than ours. Fork migrations are named
 | `server/src/lib/model.ts` | Skip Pontoon translation statistics with static locales |
 | `server/src/lib/api.ts` | `requireLoginMiddleware` and `disabledRoutesMiddleware` (Mozilla newsletter off with `CV_PRIVATE_INSTANCE`) after `authMiddleware`; `/community` router; only default avatars with `CV_PRIVATE_STORAGE` |
 | `server/src/auth-router.ts` | Ignore anonymous (Basic auth) clients when login is required; only allow same-site `?redirect=` after sign-in |
-| `server/src/infrastructure/storage/storage.ts` | `makePublic` does nothing with `CV_PRIVATE_STORAGE` |
+| `server/src/infrastructure/storage/storage.ts` | `makePublic` does nothing with `CV_PRIVATE_STORAGE`; `CV_STORAGE_ENDPOINT` selects a GCS-compatible service instead of Google Cloud |
 | `server/src/infrastructure/authentication/authentication.ts` | Production URL from `CV_PUBLIC_URL` |
 | `server/src/csp-header-value.ts` | Strict policy when `CV_STRICT_CSP` is set |
 | `server/src/fetch-legal-document.ts` | Local documents from `CV_LEGAL_DOCS_DIR` |
@@ -165,6 +165,20 @@ datasets with photos of other communities.
 - The page plays a segment and stops at its end (or loops it), skips 5 s,
   and slows down to 0.5×. Esc plays or pauses the segment being typed in,
   except while an input method is composing.
+
+## Storage
+
+Audio and exports can be kept in Google Cloud Storage (`CV_STORAGE_ENDPOINT`
+empty: browsers get short-lived signed links) or in a GCS-compatible service
+on the server itself, such as fake-gcs-server with a filesystem backend
+(`CV_STORAGE_ENDPOINT=http://storage:4443`). In the second case the app
+streams files itself after its permission checks, with byte ranges for
+seeking (`streamObject` in `server/src/fork/stories/storage.ts`), and the
+storage service must not be reachable from outside.
+
+On private instances upstream's scripted speech (reading sentences aloud,
+checking clips, writing sentences, the dashboard) is hidden: this archive
+doesn't use it, and its audio links assume Google Cloud.
 
 ## Exports
 

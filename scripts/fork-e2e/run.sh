@@ -73,7 +73,7 @@ docker run -d --name cvfork-web --network "$NET" "${USER_ARGS[@]}" -v "$REPO":/c
   -e CV_MYSQLHOST=cvfork-db -e CV_DB_ROOT_PASS=voicewebroot -e CV_MYSQLDBNAME=voiceweb \
   -e CV_REDIS_URL=cvfork-redis \
   -e CV_STORAGE_LOCAL_DEVELOPMENT_ENDPOINT=http://cvfork-storage:8080 \
-  -e CV_STORAGE_ORIGIN=http://cvfork-storage:8080 \
+  -e CV_STORAGE_ENDPOINT=http://cvfork-storage:8080 \
   -e CV_FXA_DOMAIN=http://cvfork-keycloak:8080/realms/voice \
   -e CV_FXA_CLIENT_ID=cv -e CV_FXA_CLIENT_SECRET=cvsecret \
   -e CV_SECRET="e2e-$(openssl rand -hex 16)" -e CV_JWT_KEY="e2e-$(openssl rand -hex 16)" \

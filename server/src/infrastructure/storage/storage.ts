@@ -12,9 +12,11 @@ export type Metadata = {
 }
 
 const storage =
-  getConfig().ENVIRONMENT === 'local'
+  getConfig().ENVIRONMENT === 'local' || getForkConfig().STORAGE_ENDPOINT
     ? new Storage({
-        apiEndpoint: getConfig().STORAGE_LOCAL_DEVELOPMENT_ENDPOINT,
+        apiEndpoint:
+          getForkConfig().STORAGE_ENDPOINT ||
+          getConfig().STORAGE_LOCAL_DEVELOPMENT_ENDPOINT,
         projectId: 'local',
         useAuthWithCustomEndpoint: false,
       })

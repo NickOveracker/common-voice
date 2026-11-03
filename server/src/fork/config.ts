@@ -39,6 +39,12 @@ export type ForkConfig = {
   STRICT_CSP: boolean
   // Origin audio files are served from, e.g. https://storage.example.org
   STORAGE_ORIGIN: string
+  // A Google Cloud Storage compatible service to use instead of Google
+  // Cloud, e.g. fake-gcs-server keeping files on the server's own disk:
+  // http://storage:4443. Its files are then streamed through the app, after
+  // the app's permission checks, so it never needs to be reachable from
+  // browsers. Leave empty for Google Cloud Storage and signed links.
+  STORAGE_ENDPOINT: string
   // Never make stored files publicly readable. Profile pictures are limited
   // to the default avatars, and bulk submission emails link to files that
   // need storage credentials to open.
@@ -78,6 +84,7 @@ export function getForkConfig(): ForkConfig {
       LEGAL_DOCS_DIR: configEntry('CV_LEGAL_DOCS_DIR', '', castString),
       STRICT_CSP: configEntry('CV_STRICT_CSP', false, castBoolean),
       STORAGE_ORIGIN: configEntry('CV_STORAGE_ORIGIN', '', castString),
+      STORAGE_ENDPOINT: configEntry('CV_STORAGE_ENDPOINT', '', castString),
       PRIVATE_STORAGE: configEntry('CV_PRIVATE_STORAGE', false, castBoolean),
       PUBLIC_URL: configEntry('CV_PUBLIC_URL', '', castString),
       SMTP_URL: configEntry('CV_SMTP_URL', '', castString),

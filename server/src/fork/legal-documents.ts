@@ -3,11 +3,15 @@ import * as path from 'path'
 import * as commonmark from 'commonmark'
 import { getForkConfig } from './config'
 
-const FALLBACK_LOCALES = ['en']
+// Same order as web/src/fork/locale-fallbacks.ts
+const FALLBACK_LOCALES: { [locale: string]: string[] } = {
+  ain: ['ja'],
+}
 
 // Reads <name>.<locale>.md from CV_LEGAL_DOCS_DIR, e.g. privacy_notice.ja.md,
-// falling back to English. Returns null when local documents are not
-// configured, so the caller fetches Mozilla's instead.
+// falling back to English (Ainu falls back to Japanese first). Returns null
+// when local documents are not configured, so the caller fetches Mozilla's
+// instead.
 export function readLocalLegalDocument(
   name: string,
   locale: string
@@ -16,8 +20,8 @@ export function readLocalLegalDocument(
   if (!LEGAL_DOCS_DIR) return null
 
   // locale comes from the URL
-  const candidates = [locale, ...FALLBACK_LOCALES].filter(candidate =>
-    /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/.test(candidate)
+  const candidates = [locale, ...(FALLBACK_LOCALES[locale] ?? []), 'en'].filter(
+    candidate => /^[a-zA-Z]{2,3}(-[a-zA-Z0-9]+)*$/.test(candidate)
   )
 
   for (const candidate of candidates) {

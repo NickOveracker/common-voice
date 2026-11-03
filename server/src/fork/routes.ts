@@ -2,13 +2,7 @@ import PromiseRouter from 'express-promise-router'
 import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { getMySQLInstance } from '../lib/model/db/mysql'
-import {
-  getRoles,
-  grantRole,
-  isRole,
-  requireRole,
-  revokeRole,
-} from './roles'
+import { getRoles, grantRole, isRole, requireRole, revokeRole } from './roles'
 
 // Fork API, mounted at /api/v1/community.
 
@@ -49,7 +43,11 @@ const changeRole =
         .json({ message: 'unknown role' })
     }
     // Avoid locking the last admin out by accident
-    if (change === 'revoke' && role === 'admin' && clientId === self.client_id) {
+    if (
+      change === 'revoke' &&
+      role === 'admin' &&
+      clientId === self.client_id
+    ) {
       return response
         .status(StatusCodes.BAD_REQUEST)
         .json({ message: 'cannot remove your own admin role' })

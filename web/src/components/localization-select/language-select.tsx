@@ -8,6 +8,8 @@ import { LinkButton } from '../ui/ui'
 import { ChatBubblePlusGreyIcon, GlobeBlackIcon } from '../ui/icons'
 import Dropdown from '../dropdown'
 
+import { IS_PRIVATE_INSTANCE } from '../../fork/config'
+
 import './language-select.css'
 
 const RequestNewLanguageLink = () => {
@@ -77,7 +79,9 @@ const LanguageSelect = ({
         searchBoxPlaceholder={l10n.getString('dataset-searchbox-placeholder')}
         searchBoxAriaLabel={l10n.getString('dataset-searchbox-aria-label')}
         notFoundMessage={l10n.getString('dataset-search-no-results')}
-        bottomComponent={<RequestNewLanguageLink />}
+        bottomComponent={
+          IS_PRIVATE_INSTANCE ? undefined : <RequestNewLanguageLink />
+        }
         isMobile={isMobile}
         onChange={onLocaleChange}
       />

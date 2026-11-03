@@ -51,11 +51,26 @@ migrations that are older than ours. Fork migrations are named
 | `web/src/services/tracker-ga4.ts` | Don't call `gtag` when analytics isn't loaded |
 | `web/src/components/layout/non-production-banner.tsx` | Hidden on private instances |
 | `web/src/main.ts` | Import `fork/fonts.css` |
-| `web/src/components/layout/layout.tsx` | Sign-in gate around page content; private footer |
+| `web/src/components/layout/layout.tsx` | Sign-in gate around page content; private footer; `LanguageSelect` imported from `fork/header-language-select` |
+| `web/src/components/languages-provider.tsx` | URL locale and interface language kept apart via `fork/interface-locale` |
+| `web/src/components/localization-select/language-select.tsx` | No "request a language" link on private instances |
+| `web/src/services/api.ts` | Privacy/terms fetched in the interface language |
 | `web/src/components/layout/content.tsx` | `privateInstanceRoutes()` first: own home page, hidden pages redirect home |
 | `web/src/components/layout/nav/nav.tsx` | Menus filtered by `visibleMenuItems()` |
 | `web/src/components/pages/profile/layout.tsx` | Avatar tab hidden on private instances |
 | `web/src/components/pages/profile/delete/delete.tsx` | Deletion requests go to `CV_CONTACT_EMAIL` |
+
+## Interface language and contribution language
+
+Upstream uses the locale in the URL both for the interface and for the
+language people contribute in. On private instances
+(`web/src/fork/interface-locale.ts`):
+
+- The URL locale is the contribution language, one of
+  `CV_CONTRIBUTABLE_LOCALES` (e.g. `/ain/speak`).
+- The interface language is a separate preference chosen in the header
+  menu. It defaults to Japanese (English if the browser asks for it); Ainu is
+  only used when picked.
 
 ## Community roles
 

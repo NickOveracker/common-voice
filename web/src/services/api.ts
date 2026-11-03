@@ -31,6 +31,7 @@ import { Locale } from '../stores/locale'
 import { User } from '../stores/user'
 import { USER_KEY } from '../stores/root'
 import { SPONTANEOUS_SPEECH_ROOT_URL } from '../urls'
+import { currentInterfaceLocale } from '../fork/interface-locale'
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -369,7 +370,10 @@ export default class API {
   fetchDocument(
     name: 'privacy' | 'terms' | 'challenge-terms'
   ): Promise<string> {
-    const locale = name === 'challenge-terms' ? 'en' : this.locale
+    const locale =
+      name === 'challenge-terms'
+        ? 'en'
+        : currentInterfaceLocale() ?? this.locale
     return this.fetch(`/${name}/${locale}.html`, { isJSON: false })
   }
 

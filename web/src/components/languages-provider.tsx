@@ -6,11 +6,7 @@ import { useDispatch } from 'react-redux'
 import * as Sentry from '@sentry/react'
 
 import URLS from '../urls'
-import {
-  createLocalization,
-  DEFAULT_LOCALE,
-  negotiateLocales,
-} from '../services/localization'
+import { createLocalization, negotiateLocales } from '../services/localization'
 import { useTypedSelector } from '../stores/tree'
 import { replacePathLocale } from '../utility'
 import { useAPI } from '../hooks/store-hooks'
@@ -18,6 +14,12 @@ import { Spinner } from './ui/ui'
 import { Locale } from '../stores/locale'
 import * as Languages from '../stores/languages'
 import { useLocale } from './locale-helpers'
+import {
+  defaultRouteLocale,
+  interfaceLocales,
+  routeLocales,
+  useInterfaceLocale,
+} from '../fork/interface-locale'
 
 const SentryRoute = Sentry.withSentryRouting(Route)
 
@@ -86,7 +88,7 @@ const LanguageRoutes = ({
           const localeParam = something?.match?.params?.locale
 
           const hasTranslatedLocale =
-            languages.translatedLocales.includes(localeParam)
+            routeLocales(languages).includes(localeParam)
 
           if (hasTranslatedLocale) {
             // We'll handle the locale change via useEffect
@@ -155,6 +157,7 @@ const LanguagesProvider = ({ children }: LanguagesProviderProps) => {
 
   const [userLocales, setUserLocales] = useState([])
   const [localization, setLocalization] = useState(null)
+  const [interfaceLocale] = useInterfaceLocale(languages.translatedLocales ?? [])
 
   const loadLanguages = () => {
     dispatch(Languages.actions.loadLocalesData())
@@ -168,25 +171,26 @@ const LanguagesProvider = ({ children }: LanguagesProviderProps) => {
     const localizationUserLocales = [...userLocales]
     const pathname = history.location.pathname
 
-    if (!languages.translatedLocales.includes(userLocales[0])) {
-      localizationUserLocales[0] = DEFAULT_LOCALE
+    if (!routeLocales(languages).includes(userLocales[0])) {
+      localizationUserLocales[0] = defaultRouteLocale(languages)
       setUserLocales(localizationUserLocales)
-      setLocale(DEFAULT_LOCALE)
-      history.replace(replacePathLocale(pathname, DEFAULT_LOCALE))
+      setLocale(localizationUserLocales[0])
+      history.replace(replacePathLocale(pathname, localizationUserLocales[0]))
     } else {
       setLocale(localizationUserLocales[0])
     }
 
+    const uiLocales = interfaceLocales(localizationUserLocales, interfaceLocale)
     const { documentElement } = document
-    documentElement.setAttribute('lang', localizationUserLocales[0])
+    documentElement.setAttribute('lang', uiLocales[0])
     documentElement.setAttribute(
       'dir',
-      languages.rtlLocales.includes(localizationUserLocales[0]) ? 'rtl' : 'ltr'
+      languages.rtlLocales.includes(uiLocales[0]) ? 'rtl' : 'ltr'
     )
 
     const newLocalization = await createLocalization(
       api,
-      localizationUserLocales,
+      uiLocales,
       flags.messageOverwrites,
       languages.translatedLocales
     )
@@ -202,11 +206,11 @@ const LanguagesProvider = ({ children }: LanguagesProviderProps) => {
     if (userLocales.length === 0 && !languages?.isLoading) {
       let newUserLocales = negotiateLocales(
         navigator.languages,
-        languages.translatedLocales
+        routeLocales(languages)
       )
       // <== Check for stored locale first
       const storedLocale = getStoredLocale()
-      if (storedLocale && languages.translatedLocales.includes(storedLocale)) {
+      if (storedLocale && routeLocales(languages).includes(storedLocale)) {
         newUserLocales = [storedLocale, ...newUserLocales]
       }
       setUserLocales(newUserLocales)
@@ -217,7 +221,7 @@ const LanguagesProvider = ({ children }: LanguagesProviderProps) => {
     if (userLocales.length > 0) {
       updateLocalization()
     }
-  }, [userLocales])
+  }, [userLocales, interfaceLocale])
 
   if (languages?.isLoading || !localization) {
     return <Spinner />

@@ -85,6 +85,14 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     if (!profile.text.includes('プライバシーに関するお知らせ')) {
       throw new Error('community privacy wording missing')
     }
+    const gender = await page.$eval('.profile-info select[name="gender"]', el => ({
+      value: el.value,
+      shown: el.selectedOptions[0]?.textContent ?? '',
+    }))
+    log(`gender field: value "${gender.value}", shown "${gender.shown}"`)
+    if (gender.value === '' && gender.shown !== '') {
+      throw new Error('gender field shows a choice that was not made')
+    }
     await page.screenshot({ path: `${shots}/1c-profile.png`, fullPage: true })
 
     await page.fill('.profile-info [name="username"]', `facilitator-${RUN}`)
@@ -183,6 +191,11 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.getByRole('heading', { name: 'Stories' }).waitFor()
     log(`English interface at ${page.url()}`)
     await page.screenshot({ path: `${shots}/6-english.png`, fullPage: true })
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.reload()
+    await page.getByRole('heading', { name: 'Stories' }).waitFor()
+    await page.screenshot({ path: `${shots}/7-phone.png`, fullPage: true })
 
     if (cspErrors.length) throw new Error('CSP violations: ' + cspErrors.join('\n'))
     log(`external hosts contacted: ${[...external].join(', ') || 'none'}`)

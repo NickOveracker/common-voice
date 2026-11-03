@@ -154,7 +154,10 @@ function ProfileInfo({
       ...pick(userFields, ['username', 'age', 'gender']),
       languages: userLanguages.filter(l => l.locale),
       visible: JSON.parse(visible.toString()),
-      client_id: user.userId,
+      // None for an existing account, so the server uses the session's: until
+      // claimLocalUser finishes, user.userId is a temporary browser id, and
+      // the server refuses a mismatch (fork fix)
+      client_id: user.account ? undefined : user.userId,
       enrollment: user.userClients[0].enrollment || {
         team: null,
         challenge: null,
@@ -271,7 +274,9 @@ function ProfileInfo({
             value={gender}
             onChange={handleChangeFor('gender')}
             name="gender">
-            <Options>{GENDERS}</Options>
+            {/* Empty choice, as for age: without it the first gender is shown
+                as chosen when none is (fork fix) */}
+            <Options>{{ '': '', ...GENDERS }}</Options>
           </LabeledSelect>
         </Localized>
       </div>

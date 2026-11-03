@@ -59,7 +59,7 @@ migrations that are older than ours. Fork migrations are named
 | `web/src/components/layout/nav/nav.tsx` | Menus filtered by `visibleMenuItems()` |
 | `web/src/components/pages/profile/layout.tsx` | Avatar tab hidden on private instances |
 | `web/src/components/pages/profile/delete/delete.tsx` | Deletion requests go to `CV_CONTACT_EMAIL` |
-| `web/src/components/pages/profile/info/info.tsx` | On private instances: no Mozilla newsletter checkbox or gender blog link (`hiddenOnPrivateInstance`), the community's privacy and terms wording, no separate terms dialog |
+| `web/src/components/pages/profile/info/info.tsx` | On private instances: no Mozilla newsletter checkbox or gender blog link (`hiddenOnPrivateInstance`), the community's privacy and terms wording, no separate terms dialog. Always (bug fixes): an empty gender choice; no `client_id` sent for an existing account, which upstream's server refused while the browser id was still being claimed |
 | `web/src/components/pages/profile/info/languages/languages.tsx` | No "request a language" link on private instances |
 | `web/src/components/pages/profile/settings/settings.tsx` | Email change requests go to `CV_CONTACT_EMAIL` |
 

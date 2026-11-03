@@ -327,7 +327,7 @@ const SpeakersPage = () => {
   React.useEffect(load, [load])
 
   return (
-    <Page className="fork-stories">
+    <Page className="fork-stories" isCentered>
       <PageHeading>
         <Localized id="fork-speakers-title" />
       </PageHeading>

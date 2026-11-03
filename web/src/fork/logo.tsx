@@ -5,7 +5,7 @@ import Logo from '../components/layout/logo'
 import { LocaleLink } from '../components/locale-helpers'
 import { IS_PRIVATE_INSTANCE } from './config'
 
-import './logo.css'
+import './header.css'
 
 type Props = React.ComponentProps<typeof Logo>
 

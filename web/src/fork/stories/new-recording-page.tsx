@@ -443,7 +443,7 @@ const NewRecordingPage = () => {
   }
 
   return (
-    <Page className="fork-stories">
+    <Page className="fork-stories" isCentered>
       <PageHeading>
         <Localized id="fork-new-title" />
       </PageHeading>

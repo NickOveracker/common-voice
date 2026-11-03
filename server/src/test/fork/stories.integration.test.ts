@@ -166,9 +166,14 @@ describeIntegration('stories API', () => {
         research: false,
         speech_technology: false,
         method: 'family_or_community',
+        given_on: '1999-01-01',
       }
     )
     expect(consent.status).toBe(201)
+
+    // A date, not a timestamp that could move to another day
+    const speaker = await api(FACILITATOR, 'GET', `/speakers/${speakerId}`)
+    expect(speaker.json.consent.given_on).toBe('1999-01-01')
   })
 
   it('only lets people who manage a speaker record them', async () => {

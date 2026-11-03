@@ -87,15 +87,26 @@ export async function currentConsents(
   return consents
 }
 
-// MySQL returns TINYINT(1) as numbers
+// MySQL returns TINYINT(1) as numbers, and DATE as a Date
 type ConsentRow = Omit<
   Consent,
-  'archive' | 'community_use' | 'research' | 'speech_technology'
+  'archive' | 'community_use' | 'research' | 'speech_technology' | 'given_on'
 > & {
+  given_on: Date | string | null
   archive: number
   community_use: number
   research: number
   speech_technology: number
+}
+
+// The driver reads DATE columns as a Date at local midnight; turning that into
+// an ISO timestamp would shift the day in time zones east of UTC.
+function toDateOnly(value: Date | string | null): string | null {
+  if (!(value instanceof Date)) return value
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(
+    value.getDate()
+  )}`
 }
 
 function toConsent(row: ConsentRow): Consent {
@@ -106,7 +117,7 @@ function toConsent(row: ConsentRow): Consent {
     research: Boolean(row.research),
     speech_technology: Boolean(row.speech_technology),
     method: row.method,
-    given_on: row.given_on,
+    given_on: toDateOnly(row.given_on),
     notes: row.notes,
     created_at: row.created_at,
     withdrawn_at: row.withdrawn_at,

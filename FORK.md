@@ -120,6 +120,8 @@ docker run -d --name cvfork-storage --network cvfork-test \
 docker exec cvfork-db mysql -uroot -pvoicewebroot \
   -e "GRANT ALL ON \`fork_test_%\`.* TO 'voicecommons'@'%'"
 
+# Stop cvfork-web first if the browser test left it running: its queue
+# worker shares Redis and would take the test's jobs.
 # in a Node 18 container with ffmpeg, on the cvfork-test network:
 cd server && yarn build && \
 CV_FORK_INTEGRATION=true CV_ENVIRONMENT=local CV_PROD=false \

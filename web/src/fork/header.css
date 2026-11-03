@@ -1,0 +1,22 @@
+/* The upstream .Logo box is sized for the image; let the name set the width */
+.Logo.fork-site-name {
+  width: auto;
+  height: auto;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  color: var(--black);
+  text-decoration: none;
+}
+
+/* Upstream hides the username in the header on phones, but its rule in
+   user-menu.css uses @media (--sm-down), which the build leaves unresolved,
+   so a long name pushed the header past the screen edge. Same rule, plain
+   media query. */
+@media (max-width: 767px) {
+  .user-menu .toggle .username-btn .name {
+    display: none;
+  }
+}

@@ -16,6 +16,18 @@
   margin-inline-start: auto;
 }
 
+/* Upstream buttons are at least 14rem wide, too wide for two side by side
+   on a phone */
+.fork-stories__actions .button {
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.fork-stories__filter {
+  flex: 1 1 20rem;
+  max-width: 30rem;
+}
+
 .fork-stories__list {
   list-style: none;
   padding: 0;
@@ -33,6 +45,8 @@
 
 .fork-stories__card h2 {
   font-size: var(--font-size-md);
+  /* The heading font has no kana; titles and names are often Japanese */
+  font-family: var(--base-font-family);
   margin: 0 0 0.25rem;
 }
 

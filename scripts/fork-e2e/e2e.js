@@ -31,7 +31,13 @@ const log = msg => console.log(`[${++step}] ${msg}`)
   const external = new Set()
   page.on('request', r => {
     const host = new URL(r.url()).host
-    if (!['localhost:9000', 'cvfork-keycloak:8080', 'cvfork-storage:8080'].includes(host)) {
+    if (
+      ![
+        'localhost:9000',
+        'cvfork-keycloak:8080',
+        'cvfork-storage:8080',
+      ].includes(host)
+    ) {
       external.add(host)
     }
   })
@@ -42,7 +48,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     log(`sign-in gate shown in Japanese at ${page.url()}`)
     await page.screenshot({ path: `${shots}/1-gate.png`, fullPage: true })
 
-    const anon = await page.evaluate(async () => (await fetch('/api/v1/ain/clips')).status)
+    const anon = await page.evaluate(
+      async () => (await fetch('/api/v1/ain/clips')).status
+    )
     log(`anonymous API request status: ${anon}`)
     if (anon !== 403) throw new Error('anonymous API request was not refused')
 
@@ -51,7 +59,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.fill('#username', 'facilitator')
     await page.fill('#password', 'test1234')
     await page.click('#kc-login')
-    await page.waitForURL(u => u.toString().startsWith(BASE), { timeout: 30000 })
+    await page.waitForURL(u => u.toString().startsWith(BASE), {
+      timeout: 30000,
+    })
     await page.waitForLoadState('networkidle')
     log(`signed in, now at ${page.url()}`)
     await page.waitForTimeout(1500)
@@ -59,7 +69,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
 
     // Profile setup: no Mozilla newsletter, privacy wording, links or logo
     await page.goto(`${BASE}/ain/profile/info`)
-    await page.waitForSelector('.profile-info [name="privacy"]', { timeout: 30000 })
+    await page.waitForSelector('.profile-info [name="privacy"]', {
+      timeout: 30000,
+    })
     await page.waitForTimeout(1000)
     const siteName = await page.textContent('.fork-site-name')
     const title = await page.title()
@@ -72,23 +84,35 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       newsletter: document.querySelectorAll('[name="email-opt-in"]').length,
       mozillaLinks: [...document.querySelectorAll('a[href]')]
         .map(a => a.href)
-        .filter(href => /mozilla/i.test(href) || href.includes('/language/request')),
+        .filter(
+          href => /mozilla/i.test(href) || href.includes('/language/request')
+        ),
       logoImages: document.querySelectorAll('.LogoImage').length,
     }))
     log(
       `profile: newsletter ${profile.newsletter}, Mozilla/request links ${profile.mozillaLinks.length}, logo images ${profile.logoImages}`
     )
-    if (profile.newsletter || profile.mozillaLinks.length || profile.logoImages) {
-      throw new Error('Mozilla leftovers on profile page: ' + profile.mozillaLinks.join(' '))
+    if (
+      profile.newsletter ||
+      profile.mozillaLinks.length ||
+      profile.logoImages
+    ) {
+      throw new Error(
+        'Mozilla leftovers on profile page: ' + profile.mozillaLinks.join(' ')
+      )
     }
-    if (/Mozilla/i.test(profile.text)) throw new Error('profile page mentions Mozilla')
+    if (/Mozilla/i.test(profile.text))
+      throw new Error('profile page mentions Mozilla')
     if (!profile.text.includes('プライバシーに関するお知らせ')) {
       throw new Error('community privacy wording missing')
     }
-    const gender = await page.$eval('.profile-info select[name="gender"]', el => ({
-      value: el.value,
-      shown: el.selectedOptions[0]?.textContent ?? '',
-    }))
+    const gender = await page.$eval(
+      '.profile-info select[name="gender"]',
+      el => ({
+        value: el.value,
+        shown: el.selectedOptions[0]?.textContent ?? '',
+      })
+    )
     log(`gender field: value "${gender.value}", shown "${gender.shown}"`)
     if (gender.value === '' && gender.shown !== '') {
       throw new Error('gender field shows a choice that was not made')
@@ -99,14 +123,21 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     const privacy = page.locator('.profile-info [name="privacy"]')
     if (!(await privacy.isDisabled())) await privacy.check({ force: true })
     const saved = page.waitForResponse(
-      r => r.url().endsWith('/api/v1/user_client') && r.request().method() !== 'GET'
+      r =>
+        r.url().endsWith('/api/v1/user_client') &&
+        r.request().method() !== 'GET'
     )
     await page.click('.profile-info button.save')
     const saveStatus = (await saved).status()
     log(`profile saved without a terms dialog, status ${saveStatus}`)
     if (saveStatus !== 200) throw new Error('profile save failed')
     const newsletter = await page.evaluate(
-      async () => (await fetch('/api/v1/newsletter/someone@example.org', { method: 'POST' })).status
+      async () =>
+        (
+          await fetch('/api/v1/newsletter/someone@example.org', {
+            method: 'POST',
+          })
+        ).status
     )
     log(`newsletter sign-up request status: ${newsletter}`)
     if (newsletter !== 404) throw new Error('newsletter route is not disabled')
@@ -131,6 +162,7 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.click('button:has-text("同意を保存")')
     await page.waitForSelector('text=同意の履歴')
     log('consent recorded')
+    await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({ path: `${shots}/2-speakers.png`, fullPage: true })
 
     await page.goto(`${BASE}/ain/stories/new`)
@@ -165,7 +197,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       if (!ready) await page.waitForTimeout(1000)
     }
     if (!ready) throw new Error('recording never became ready')
-    const card = page.locator('li', { has: page.locator(`h2:has-text("${TITLE}")`) })
+    const card = page.locator('li', {
+      has: page.locator(`h2:has-text("${TITLE}")`),
+    })
     const meta = await card.locator('.fork-stories__meta').innerText()
     log(`stories list shows: ${meta}`)
 
@@ -182,7 +216,8 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     })
     log(`audio plays in the page, duration ${audio.toFixed(1)}s`)
     // 5 s + 3 s recorded, with a 1.5 s pause that must not be included
-    if (audio < 6.5 || audio > 9.5) throw new Error(`unexpected duration ${audio}`)
+    if (audio < 6.5 || audio > 9.5)
+      throw new Error(`unexpected duration ${audio}`)
     await page.screenshot({ path: `${shots}/5-stories.png`, fullPage: true })
 
     // Interface language switch keeps the contribution language in the URL
@@ -192,12 +227,47 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     log(`English interface at ${page.url()}`)
     await page.screenshot({ path: `${shots}/6-english.png`, fullPage: true })
 
+    // Phone width: no page wider than the screen
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.reload()
-    await page.getByRole('heading', { name: 'Stories' }).waitFor()
-    await page.screenshot({ path: `${shots}/7-phone.png`, fullPage: true })
+    for (const [path, heading] of [
+      ['stories', 'Stories'],
+      ['stories/new', 'New recording'],
+      ['speakers', 'Speakers'],
+    ]) {
+      await page.goto(`${BASE}/ain/${path}`)
+      await page
+        .getByRole('heading', { name: heading, exact: true })
+        .first()
+        .waitFor()
+      await page.waitForTimeout(500)
+      const width = await page.evaluate(
+        () => document.documentElement.scrollWidth
+      )
+      log(`phone width: /ain/${path} is ${width}px wide`)
+      if (width > 390) {
+        const wide = await page.evaluate(() =>
+          [...document.querySelectorAll('body *')]
+            .filter(el => el.getBoundingClientRect().right > 391)
+            .slice(0, 8)
+            .map(
+              el =>
+                `${el.tagName.toLowerCase()}.${[...el.classList].join(
+                  '.'
+                )} → ${Math.round(el.getBoundingClientRect().right)}px`
+            )
+        )
+        throw new Error(
+          `/ain/${path} is wider than the screen:\n  ${wide.join('\n  ')}`
+        )
+      }
+      await page.screenshot({
+        path: `${shots}/7-phone-${path.replace('/', '-')}.png`,
+        fullPage: true,
+      })
+    }
 
-    if (cspErrors.length) throw new Error('CSP violations: ' + cspErrors.join('\n'))
+    if (cspErrors.length)
+      throw new Error('CSP violations: ' + cspErrors.join('\n'))
     log(`external hosts contacted: ${[...external].join(', ') || 'none'}`)
     console.log('E2E PASSED')
   } catch (error) {

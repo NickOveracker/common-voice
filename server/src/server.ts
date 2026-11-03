@@ -26,6 +26,7 @@ import { setupAuthRouter } from './auth-router'
 import { TimeUnits } from 'common'
 import { getForkConfig, usesStaticLocales } from './fork/config'
 import { importStaticLocales } from './fork/locales'
+import { setupRecordingProcessingQueue } from './fork/stories/processing'
 
 const MAINTENANCE_VERSION_KEY = 'maintenance-version'
 const FULL_CLIENT_PATH = path.join(__dirname, '..', '..', 'web')
@@ -61,6 +62,7 @@ export default class Server {
         this.api.takeout.setQueue(this.taskQueues.dataTakeout)
         setupUpdateValidatedSentencesQueue()
         setupBulkSubmissionQueue()
+        setupRecordingProcessingQueue()
       }
     })
 

@@ -40,5 +40,7 @@ export function requireLoginMiddleware(
   ) {
     return next()
   }
-  response.status(401).json({ message: 'login required' })
+  // 403 rather than 401: the web client reloads the page on 401, which would
+  // loop for visitors who haven't signed in
+  response.status(403).json({ message: 'login required' })
 }

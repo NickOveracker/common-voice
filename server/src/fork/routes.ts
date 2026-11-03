@@ -3,6 +3,7 @@ import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { getMySQLInstance } from '../lib/model/db/mysql'
 import { getRoles, grantRole, isRole, requireRole, revokeRole } from './roles'
+import storiesRouter from './stories/routes'
 
 // Fork API, mounted at /api/v1/community.
 
@@ -72,6 +73,7 @@ const changeRole =
   }
 
 export default PromiseRouter({ mergeParams: true })
+  .use(storiesRouter)
   .get('/roles', getOwnRoles)
   .get('/admin/users', requireRole('admin'), listUsers)
   .put(

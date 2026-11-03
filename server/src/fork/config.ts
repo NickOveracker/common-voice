@@ -49,6 +49,8 @@ export type ForkConfig = {
   // production, the ethereal.email test service), e.g.
   // smtps://user:password@mail.example.org:465
   SMTP_URL: string
+  // Largest recording that can be uploaded, in bytes.
+  RECORDING_MAX_BYTES: number
 }
 
 let forkConfig: ForkConfig
@@ -75,6 +77,11 @@ export function getForkConfig(): ForkConfig {
       PRIVATE_STORAGE: configEntry('CV_PRIVATE_STORAGE', false, castBoolean),
       PUBLIC_URL: configEntry('CV_PUBLIC_URL', '', castString),
       SMTP_URL: configEntry('CV_SMTP_URL', '', castString),
+      RECORDING_MAX_BYTES: configEntry(
+        'CV_RECORDING_MAX_BYTES',
+        4 * 1024 ** 3,
+        Number
+      ),
     }
   }
   return forkConfig

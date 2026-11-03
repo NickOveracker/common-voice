@@ -36,7 +36,7 @@ migrations that are older than ours. Fork migrations are named
 
 | File | Change |
 |---|---|
-| `server/src/server.ts` | Static locale import instead of Pontoon; configurable robots.txt |
+| `server/src/server.ts` | Static locale import instead of Pontoon; configurable robots.txt; recording processing queue |
 | `server/src/lib/model.ts` | Skip Pontoon translation statistics with static locales |
 | `server/src/lib/api.ts` | `requireLoginMiddleware` after `authMiddleware`; `/community` router; only default avatars with `CV_PRIVATE_STORAGE` |
 | `server/src/auth-router.ts` | Ignore anonymous (Basic auth) clients when login is required; only allow same-site `?redirect=` after sign-in |
@@ -80,6 +80,52 @@ Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
 - `GET /api/v1/community/roles`: your own roles
 - `GET /api/v1/community/admin/users`: users and their roles (admin)
 - `PUT|DELETE /api/v1/community/admin/users/:clientId/roles/:role` (admin)
+
+## Speakers and recordings
+
+`server/src/fork/stories/`, API under `/api/v1/community` (signed-in users):
+
+- Speakers are the people recorded, separate from site accounts, so
+  facilitators can record elders. Real names are only shown to whoever
+  created the speaker, the speaker themselves, and moderators.
+- Consent is recorded per speaker (archive, community use, research, speech
+  technology; how and when it was given). It is never edited: changes add a
+  new record, and withdrawal is marked on it. Recording a speaker needs
+  current consent to archive.
+- Recordings are uploaded in chunks of up to 8 MiB (`PUT
+  /recordings/:id/chunks/:index`), which also makes uploads resumable. On
+  `POST /recordings/:id/complete` a background job joins the chunks, keeps
+  the result as the original, and makes an MP3 for playback (needs `ffmpeg`
+  and `ffprobe`). Recording date can be a year, month or day; location is
+  optional.
+
+## Tests
+
+Fork unit tests run with the normal test suites. The integration test
+(`server/src/test/fork/stories.integration.test.ts`) needs MySQL, Redis,
+fake-gcs-server and ffmpeg, and a compiled server (db-migrate only runs
+compiled migrations):
+
+```sh
+docker network create cvfork-test
+docker run -d --name cvfork-db --network cvfork-test \
+  -e MYSQL_ROOT_PASSWORD=voicewebroot -e MYSQL_USER=voicecommons \
+  -e MYSQL_PASSWORD=voicecommons mysql:8.0.31
+docker run -d --name cvfork-redis --network cvfork-test redis:alpine
+docker run -d --name cvfork-storage --network cvfork-test \
+  fsouza/fake-gcs-server -scheme http -port 8080 -backend memory
+docker exec cvfork-db mysql -uroot -pvoicewebroot \
+  -e "GRANT ALL ON \`fork_test_%\`.* TO 'voicecommons'@'%'"
+
+# in a Node 18 container with ffmpeg, on the cvfork-test network:
+cd server && yarn build && \
+CV_FORK_INTEGRATION=true CV_ENVIRONMENT=local CV_PROD=false \
+CV_ADMIN_EMAILS=facilitator@example.org \
+CV_MYSQLHOST=cvfork-db CV_DB_ROOT_PASS=voicewebroot \
+CV_MYSQLDBNAME=fork_test_$(date +%s) CV_REDIS_URL=cvfork-redis \
+CV_STORAGE_LOCAL_DEVELOPMENT_ENDPOINT=http://cvfork-storage:8080 \
+npx jest --forceExit src/test/fork
+```
 
 ## Settings
 

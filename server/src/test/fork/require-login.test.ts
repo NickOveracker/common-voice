@@ -48,13 +48,13 @@ describe('requireLoginMiddleware', () => {
     ]) {
       const { next, status } = run(true, { method: 'GET', path })
       expect(next).not.toHaveBeenCalled()
-      expect(status).toHaveBeenCalledWith(401)
+      expect(status).toHaveBeenCalledWith(403)
     }
   })
 
   it('rejects anonymous writes even to allowed paths', () => {
     const { status } = run(true, { method: 'POST', path: '/languages' })
-    expect(status).toHaveBeenCalledWith(401)
+    expect(status).toHaveBeenCalledWith(403)
   })
 
   it('allows what the site needs before sign-in', () => {

@@ -235,3 +235,68 @@
 .fork-transcribe__tools {
   margin-inline-start: auto;
 }
+
+/* Reviews of transcripts */
+
+.fork-transcribe__field {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.fork-review__bar,
+.fork-review__comment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  font-size: var(--font-size-sm);
+}
+
+.fork-review__comment .labeled-form-control {
+  flex: 1 1 12rem;
+}
+
+.fork-review__comment .button {
+  min-width: 0;
+  width: auto;
+  height: 2.5rem;
+}
+
+.fork-review {
+  font-size: var(--font-size-sm);
+}
+
+.fork-review--none {
+  color: var(--warm-grey, #959595);
+}
+
+.fork-review--approved {
+  /* Darker than upstream's greens and reds, for small text on white */
+  color: #1e7a45;
+  font-weight: 600;
+}
+
+.fork-review--needs-work {
+  color: #b3261e;
+}
+
+.fork-review__history {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+  font-size: var(--font-size-sm);
+}
+
+.fork-review__history li {
+  display: grid;
+  gap: 0.15rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 2px solid var(--light-grey, #e7e5e2);
+}
+
+.fork-review__text {
+  white-space: pre-wrap;
+}

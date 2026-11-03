@@ -174,3 +174,13 @@ export const AddTranscriptRequest: AllowedSchema = {
     base_id: { type: ['integer', 'null'] },
   },
 }
+
+export const AddReviewRequest: AllowedSchema = {
+  type: 'object',
+  required: ['verdict'],
+  additionalProperties: false,
+  properties: {
+    verdict: { type: 'string', enum: ['approved', 'needs_work'] },
+    comment: nullableString(2000),
+  },
+}

@@ -50,6 +50,9 @@ if ! running cvfork-keycloak; then
   "${K[@]}" create users -r voice -s username=facilitator -s email=facilitator@example.org \
     -s emailVerified=true -s enabled=true -s firstName=Test -s lastName=Facilitator
   "${K[@]}" set-password -r voice --username facilitator --new-password test1234
+  "${K[@]}" create users -r voice -s username=reviewer -s email=reviewer@example.org \
+    -s emailVerified=true -s enabled=true -s firstName=Test -s lastName=Reviewer
+  "${K[@]}" set-password -r voice --username reviewer --new-password test1234
 fi
 
 until docker exec cvfork-db mysqladmin ping -uroot -pvoicewebroot --silent 2>/dev/null; do sleep 2; done

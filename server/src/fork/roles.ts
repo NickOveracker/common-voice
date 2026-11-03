@@ -3,13 +3,14 @@ import { getConfig } from '../config-helper'
 import { getMySQLInstance } from '../lib/model/db/mysql'
 
 // Community roles. Upstream has no roles: everything is decided by crowd
-// votes. Admins manage roles and content, moderators review content, and
-// transcribers transcribe recordings.
+// votes. Admins manage roles and content, moderators look after content and
+// reports, and reviewers check transcriptions and translations (which anyone
+// signed in can write).
 //
 // People whose email is in CV_ADMIN_EMAILS are always admins, so the first
 // admins can be set up before anyone has a role.
 
-export const ROLES = ['admin', 'moderator', 'transcriber'] as const
+export const ROLES = ['admin', 'moderator', 'reviewer'] as const
 export type Role = typeof ROLES[number]
 
 export const isRole = (value: string): value is Role =>
@@ -45,13 +46,20 @@ export async function getRoles(user: {
   return [...roles]
 }
 
-// Admins can do everything moderators and transcribers can.
+// Roles that include others: admins can do everything, and moderators can
+// review.
+const INCLUDED: Record<Role, Role[]> = {
+  admin: ['moderator', 'reviewer'],
+  moderator: ['reviewer'],
+  reviewer: [],
+}
+
 export async function hasRole(
   user: { client_id?: string; email?: string },
   role: Role
 ): Promise<boolean> {
   const roles = await getRoles(user)
-  return roles.includes('admin') || roles.includes(role)
+  return roles.some(held => held === role || INCLUDED[held].includes(role))
 }
 
 export async function grantRole(

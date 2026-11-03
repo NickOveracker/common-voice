@@ -148,6 +148,22 @@ fork-transcribe-no-segments = この録音にはまだ区間がありません�
 fork-transcribe-detect = 区間を自動で検出する
 fork-transcribe-detecting = 区間を検出しています…長い録音は時間がかかります。
 
+## Reviewing transcripts
+fork-review-unreviewed = 未確認
+fork-review-approved = ✓ 確認済み
+fork-review-needs-work = 要修正
+fork-review-needs-work-comment = 要修正：{ $comment }
+fork-review-approve = 確認済みにする
+fork-review-request-changes = 要修正にする…
+fork-review-comment = 直すべき点（任意）
+fork-review-send = 送信
+fork-review-history = 以前の版
+fork-review-history-hide = 以前の版を閉じる
+fork-review-mine = （自分）
+fork-review-restore = この版に戻す
+fork-review-filter = 確認が必要な区間だけ表示
+fork-stories-review-progress = 確認済み { $approved } · 要修正 { $needsWork }
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ
 

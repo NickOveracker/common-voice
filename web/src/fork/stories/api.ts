@@ -65,8 +65,13 @@ export type Recording = {
   can_manage: boolean
   error: string | null
   uploaded_chunks?: number[]
-  // Segments, and how many have text of each kind
-  progress: { segments: number } & Record<TranscriptKind, number>
+  // Segments, how many have text of each kind, and how the current texts
+  // were reviewed
+  progress: {
+    segments: number
+    approved: number
+    needs_work: number
+  } & Record<TranscriptKind, number>
 }
 
 export type NewRecording = {
@@ -165,11 +170,20 @@ export const TRANSCRIPT_KINDS = [
 ] as const
 export type TranscriptKind = typeof TRANSCRIPT_KINDS[number]
 
+export type Review = {
+  verdict: 'approved' | 'needs_work'
+  comment: string | null
+  created_at: string
+  is_mine: boolean
+}
+
 export type Transcript = {
   id: number
   text: string
   created_at: string
   is_mine: boolean
+  // The latest review of this version
+  review: Review | null
 }
 
 export type Segment = {
@@ -209,3 +223,26 @@ export const addTranscript = (
   }
 ) =>
   request<Transcript>('POST', `/segments/${segmentId}/transcripts`, transcript)
+
+export const listTranscriptVersions = (
+  segmentId: number,
+  kind: TranscriptKind
+) =>
+  request<Transcript[]>(
+    'GET',
+    `/segments/${segmentId}/transcripts?kind=${kind}`
+  )
+
+export const addReview = (
+  transcriptId: number,
+  verdict: Review['verdict'],
+  comment: string | null = null
+) =>
+  request<Review>('POST', `/transcripts/${transcriptId}/reviews`, {
+    verdict,
+    comment,
+  })
+
+export type Role = 'admin' | 'moderator' | 'reviewer'
+
+export const getOwnRoles = () => request<{ roles: Role[] }>('GET', '/roles')

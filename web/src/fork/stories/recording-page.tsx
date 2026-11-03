@@ -8,7 +8,6 @@ import {
   Button,
   LabeledCheckbox,
   LabeledSelect,
-  LabeledTextArea,
   LinkButton,
   Spinner,
 } from '../../components/ui/ui'
@@ -16,6 +15,7 @@ import FORK_URLS from '../urls'
 import {
   addTranscript,
   detectSegments,
+  getOwnRoles,
   getRecording,
   listSegments,
   mergeSegment,
@@ -32,6 +32,7 @@ import {
 } from './api'
 import { formatDuration, formatTime } from './format'
 import { RecordingLanguages } from './languages'
+import TranscriptField from './transcript-field'
 import { Player, PLAYBACK_RATES, SKIP_MS, usePlayer } from './player'
 
 import './stories.css'
@@ -169,6 +170,7 @@ const SegmentRow = ({
   player,
   onSegments,
   onSaved,
+  canReview,
 }: {
   index: number
   segment: Segment
@@ -179,6 +181,7 @@ const SegmentRow = ({
   player: Player
   onSegments: (segments: Segment[]) => void
   onSaved: (segment: Segment) => void
+  canReview: boolean
 }) => {
   const { l10n } = useLocalization()
   const [saving, setSaving] = React.useState(false)
@@ -325,14 +328,19 @@ const SegmentRow = ({
 
       <div className="fork-transcribe__texts">
         {kindsToShow(languages, drafts, showEnglish).map(kind => (
-          <LabeledTextArea
+          <TranscriptField
             key={kind}
+            segmentId={segment.id}
+            kind={kind}
             label={l10n.getString(FIELDS[kind].label)}
-            value={drafts[kind].text}
-            rows={2}
             lang={FIELDS[kind].lang}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setDraft(kind, { text: event.target.value })
+            text={drafts[kind].text}
+            current={segment[kind]}
+            dirty={drafts[kind].text !== (segment[kind]?.text ?? '')}
+            canReview={canReview}
+            onChange={text => setDraft(kind, { text })}
+            onReviewed={transcript =>
+              onSaved({ ...segment, [kind]: transcript })
             }
           />
         ))}
@@ -416,14 +424,24 @@ const SegmentRow = ({
   )
 }
 
+// Has text that no reviewer has approved yet
+const needsChecking = (segment: Segment) =>
+  TRANSCRIPT_KINDS.some(
+    kind => segment[kind]?.text && segment[kind].review?.verdict !== 'approved'
+  )
+
 const Transcriber = ({
   recording,
   initialSegments,
+  canReview,
 }: {
   recording: Recording
   initialSegments: Segment[]
+  canReview: boolean
 }) => {
+  const { l10n } = useLocalization()
   const player = usePlayer()
+  const [onlyUnchecked, setOnlyUnchecked] = React.useState(false)
   const [segments, setSegments] = React.useState(initialSegments)
   const [drafts, setDrafts] = React.useState<Record<number, Drafts>>(() =>
     Object.fromEntries(initialSegments.map(s => [s.id, draftsFor(s)]))
@@ -497,23 +515,33 @@ const Transcriber = ({
           <p className="fork-stories__hint" />
         </Localized>
       )}
+      <LabeledCheckbox
+        label={l10n.getString('fork-review-filter')}
+        checked={onlyUnchecked}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          setOnlyUnchecked(event.target.checked)
+        }
+      />
       <ol className="fork-transcribe__segments">
-        {segments.map((segment, index) => (
-          <SegmentRow
-            key={segment.id}
-            index={index}
-            segment={segment}
-            isLast={index === segments.length - 1}
-            recording={recording}
-            drafts={drafts[segment.id] ?? draftsFor(segment)}
-            setDrafts={value =>
-              setDrafts(current => ({ ...current, [segment.id]: value }))
-            }
-            player={player}
-            onSegments={onSegments}
-            onSaved={onSaved}
-          />
-        ))}
+        {segments.map((segment, index) =>
+          onlyUnchecked && !needsChecking(segment) ? null : (
+            <SegmentRow
+              key={segment.id}
+              index={index}
+              segment={segment}
+              isLast={index === segments.length - 1}
+              recording={recording}
+              drafts={drafts[segment.id] ?? draftsFor(segment)}
+              setDrafts={value =>
+                setDrafts(current => ({ ...current, [segment.id]: value }))
+              }
+              player={player}
+              onSegments={onSegments}
+              onSaved={onSaved}
+              canReview={canReview}
+            />
+          )
+        )}
       </ol>
     </div>
   )
@@ -571,14 +599,17 @@ const RecordingPage = () => {
   const { recordingId } = useParams<{ recordingId: string }>()
   const [recording, setRecording] = React.useState<Recording | null>(null)
   const [segments, setSegments] = React.useState<Segment[] | null>(null)
+  const [canReview, setCanReview] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     const id = Number(recordingId)
-    Promise.all([getRecording(id), listSegments(id)])
-      .then(([recording, segments]) => {
+    Promise.all([getRecording(id), listSegments(id), getOwnRoles()])
+      .then(([recording, segments, { roles }]) => {
         setRecording(recording)
         setSegments(segments)
+        // Every role includes reviewing
+        setCanReview(roles.length > 0)
       })
       .catch(e => setError(e.message))
   }, [recordingId])
@@ -609,7 +640,11 @@ const RecordingPage = () => {
           </p>
           {recording.description && <p>{recording.description}</p>}
           {segments && segments.length > 0 ? (
-            <Transcriber recording={recording} initialSegments={segments} />
+            <Transcriber
+              recording={recording}
+              initialSegments={segments}
+              canReview={canReview}
+            />
           ) : (
             <NoSegments recording={recording} onDetected={setSegments} />
           )}

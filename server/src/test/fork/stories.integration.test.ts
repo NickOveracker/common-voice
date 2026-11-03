@@ -540,12 +540,106 @@ describeIntegration('stories API', () => {
     )
     expect(listed.progress).toEqual({
       segments: 3,
+      approved: 0,
+      needs_work: 0,
       transcription_latin: 1,
       transcription_kana: 1,
       transcription_ja: 0,
       translation_ja: 1,
       translation_en: 0,
     })
+
+    // Reviews. The merged versions were saved by MEMBER, who has no role;
+    // FACILITATOR is an admin, which includes reviewing.
+    const latin = segments[0].transcription_latin
+    const translation = segments[0].translation_ja
+    expect(
+      (
+        await api(MEMBER, 'POST', `/transcripts/${latin.id}/reviews`, {
+          verdict: 'approved',
+        })
+      ).status
+    ).toBe(403)
+    expect(
+      (
+        await api(
+          FACILITATOR,
+          'POST',
+          `/transcripts/${transcribed.json.id}/reviews`,
+          { verdict: 'approved' }
+        )
+      ).status
+    ).toBe(409) // an old version
+    const approved = await api(
+      FACILITATOR,
+      'POST',
+      `/transcripts/${latin.id}/reviews`,
+      { verdict: 'approved' }
+    )
+    expect(approved.status).toBe(201)
+    await api(FACILITATOR, 'POST', `/transcripts/${translation.id}/reviews`, {
+      verdict: 'needs_work',
+      comment: ' ㇷ゚ is missing ',
+    })
+    segments = (await api(MEMBER, 'GET', `/recordings/${id}/segments`)).json
+    expect(segments[0].transcription_latin.review).toMatchObject({
+      verdict: 'approved',
+      is_mine: false,
+    })
+    expect(segments[0].translation_ja.review).toMatchObject({
+      verdict: 'needs_work',
+      comment: 'ㇷ゚ is missing',
+    })
+    let progress = (await api(MEMBER, 'GET', `/recordings/${id}`)).json.progress
+    expect(progress).toMatchObject({ approved: 1, needs_work: 1 })
+
+    // Nobody reviews their own version (FACILITATOR wrote the katakana)
+    expect(
+      (
+        await api(
+          FACILITATOR,
+          'POST',
+          `/transcripts/${segments[0].transcription_kana.id}/reviews`,
+          { verdict: 'approved' }
+        )
+      ).status
+    ).toBe(403)
+    const own = await api(
+      FACILITATOR,
+      'POST',
+      `/segments/${segments[1].id}/transcripts`,
+      { kind: 'translation_ja', text: 'よい', base_id: null }
+    )
+    expect(
+      (
+        await api(FACILITATOR, 'POST', `/transcripts/${own.json.id}/reviews`, {
+          verdict: 'approved',
+        })
+      ).status
+    ).toBe(403)
+
+    // A new version starts unreviewed
+    const fixed = await api(
+      MEMBER,
+      'POST',
+      `/segments/${segments[0].id}/transcripts`,
+      {
+        kind: 'translation_ja',
+        text: '今日は、よい',
+        base_id: translation.id,
+      }
+    )
+    expect(fixed.json.review).toBeNull()
+    progress = (await api(MEMBER, 'GET', `/recordings/${id}`)).json.progress
+    expect(progress).toMatchObject({ approved: 1, needs_work: 0 })
+    const history = (
+      await api(
+        MEMBER,
+        'GET',
+        `/segments/${segments[0].id}/transcripts?kind=translation_ja`
+      )
+    ).json
+    expect(history[1].review.verdict).toBe('needs_work')
 
     // Detecting again would throw transcripts away: refused. Only those who
     // manage the recording may ask.

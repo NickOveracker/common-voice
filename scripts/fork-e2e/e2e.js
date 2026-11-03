@@ -344,6 +344,88 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     if (latin !== 'irankarapte 今日は' || kana !== 'イランカラㇷ゚テ 今日は') {
       throw new Error('transcriptions were not kept')
     }
+
+    // Review: the facilitator wrote everything, so a second person reviews
+    const storyUrl = page.url()
+    const reviewerContext = await browser.newContext({ locale: 'ja-JP' })
+    const reviewer = await reviewerContext.newPage()
+    await reviewer.goto(BASE)
+    await reviewer.click('.sign-in-gate__button')
+    await reviewer.waitForSelector('#username', { timeout: 30000 })
+    await reviewer.fill('#username', 'reviewer')
+    await reviewer.fill('#password', 'test1234')
+    await reviewer.click('#kc-login')
+    await reviewer.waitForURL(u => u.toString().startsWith(BASE), {
+      timeout: 30000,
+    })
+    await reviewer.waitForLoadState('networkidle')
+    // Accounts exist once the profile is saved
+    await reviewer.goto(`${BASE}/ain/profile/info`)
+    await reviewer.fill('.profile-info [name="username"]', `reviewer-${RUN}`)
+    await reviewer
+      .locator('.profile-info [name="privacy"]')
+      .check({ force: true })
+    const reviewerSaved = reviewer.waitForResponse(
+      r =>
+        r.url().endsWith('/api/v1/user_client') &&
+        r.request().method() !== 'GET'
+    )
+    await reviewer.click('.profile-info button.save')
+    await reviewerSaved
+    // The facilitator, an admin, makes them a reviewer
+    const granted = await page.evaluate(async () => {
+      const users = await (await fetch('/api/v1/community/admin/users')).json()
+      const user = users.find(u => u.email === 'reviewer@example.org')
+      return (
+        await fetch(
+          `/api/v1/community/admin/users/${user.client_id}/roles/reviewer`,
+          { method: 'PUT' }
+        )
+      ).status
+    })
+    log(`facilitator granted the reviewer role: ${granted}`)
+
+    await reviewer.goto(storyUrl)
+    const reviewed = reviewer.locator('.fork-transcribe__segment').first()
+    const latinField = reviewed.locator('.fork-transcribe__field', {
+      has: reviewer.getByLabel('書き起こし（ラテン文字）'),
+    })
+    const kanaField = reviewed.locator('.fork-transcribe__field', {
+      has: reviewer.getByLabel('書き起こし（カタカナ）'),
+    })
+    await latinField.locator('text=確認済みにする').click()
+    await latinField.locator('text=✓ 確認済み').waitFor()
+    await kanaField.locator('text=要修正にする').click()
+    await kanaField.getByLabel('直すべき点（任意）').fill('ㇷ゚の位置を確認')
+    await kanaField.locator('button:has-text("送信")').click()
+    await kanaField.locator('text=要修正：ㇷ゚の位置を確認').waitFor()
+    log('reviewer checked the Latin transcription and asked for katakana work')
+    await reviewer.screenshot({
+      path: `${shots}/5c-review.png`,
+      fullPage: true,
+    })
+    await reviewerContext.close()
+
+    // The facilitator sees the reviews, and cannot review their own text
+    await page.reload()
+    const own = page.locator('.fork-transcribe__segment').first()
+    await own.locator('text=✓ 確認済み').waitFor()
+    await own.locator('text=要修正：ㇷ゚の位置を確認').waitFor()
+    if ((await own.locator('text=確認済みにする').count()) > 0) {
+      throw new Error('own text offered for review')
+    }
+    // Only segments with text that isn't checked: the second has none
+    await page.getByLabel('確認が必要な区間だけ表示').check({ force: true })
+    const shown = await page.locator('.fork-transcribe__segment').count()
+    log(`facilitator sees the reviews; filtered to ${shown} segment(s)`)
+    if (shown !== 1) throw new Error('filter did not hide unwritten segments')
+    await page.getByLabel('確認が必要な区間だけ表示').uncheck({ force: true })
+    // Earlier versions, with their reviews
+    const kanaOwn = own.locator('.fork-transcribe__field', {
+      has: page.getByLabel('書き起こし（カタカナ）'),
+    })
+    await kanaOwn.locator('text=以前の版').click()
+    await kanaOwn.locator('.fork-review__history li').first().waitFor()
     await page.evaluate(() => window.scrollTo(0, 0))
     await page.screenshot({
       path: `${shots}/5b-transcribe.png`,

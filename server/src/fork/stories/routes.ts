@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { validateStrict } from '../../lib/validation'
 import {
+  AddReviewRequest,
   AddTranscriptRequest,
   CompleteRecordingRequest,
   CreateConsentRequest,
@@ -23,6 +24,7 @@ import {
   splitSegment,
   updateSegment,
 } from './segments'
+import { addReview } from './reviews'
 import {
   addConsent,
   createSpeaker,
@@ -56,7 +58,10 @@ const requireSignedIn = (
 }
 
 export default PromiseRouter({ mergeParams: true })
-  .use(['/speakers', '/recordings', '/segments'], requireSignedIn)
+  .use(
+    ['/speakers', '/recordings', '/segments', '/transcripts'],
+    requireSignedIn
+  )
   .get('/speakers', listSpeakers)
   .post(
     '/speakers',
@@ -119,4 +124,9 @@ export default PromiseRouter({ mergeParams: true })
     '/segments/:segmentId(\\d+)/transcripts',
     validateStrict({ body: AddTranscriptRequest }),
     addTranscript
+  )
+  .post(
+    '/transcripts/:transcriptId(\\d+)/reviews',
+    validateStrict({ body: AddReviewRequest }),
+    addReview
   )

@@ -124,7 +124,12 @@ async function presentRecording(
     is_mine: row.created_by === user.client_id,
     can_manage: await canManageRecording(user, row),
     error: row.status === 'failed' ? row.error : null,
-    progress: progress ?? { segments: 0, ...emptyCounts() },
+    progress: progress ?? {
+      segments: 0,
+      approved: 0,
+      needs_work: 0,
+      ...emptyCounts(),
+    },
   }
 }
 

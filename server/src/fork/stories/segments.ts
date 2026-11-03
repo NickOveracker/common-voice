@@ -3,6 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { getMySQLInstance } from '../../lib/model/db/mysql'
 import { hasRole } from '../roles'
 import { queueSegmentDetection } from './processing'
+import { latestReviews, Review } from './reviews'
 import { TRANSCRIPT_KINDS } from './schemas'
 import { withTransaction } from './transaction'
 
@@ -39,12 +40,18 @@ export const MIN_SEGMENT_MS = 200
 
 const db = getMySQLInstance()
 
-function presentTranscript(user: SessionUser, row: TranscriptRow) {
+function presentTranscript(
+  user: SessionUser,
+  row: TranscriptRow,
+  review: Review | null = null
+) {
   return {
     id: row.id,
     text: row.text,
     created_at: row.created_at,
     is_mine: row.created_by === user.client_id,
+    // The latest review of this version
+    review,
   }
 }
 
@@ -76,12 +83,18 @@ async function presentSegments(user: SessionUser, recordingId: number) {
     (...args) => db.query(...args),
     segments.map(segment => segment.id)
   )
+  const reviews = await latestReviews(
+    user,
+    transcripts.map(t => t.id)
+  )
   return segments.map(segment => {
     const current = (kind: Kind) => {
       const row = transcripts.find(
         t => t.segment_id === segment.id && t.kind === kind
       )
-      return row ? presentTranscript(user, row) : null
+      return row
+        ? presentTranscript(user, row, reviews.get(row.id) ?? null)
+        : null
     }
     return {
       id: segment.id,
@@ -96,10 +109,17 @@ async function presentSegments(user: SessionUser, recordingId: number) {
   })
 }
 
-export type Progress = { segments: number } & Record<Kind, number>
+export type Progress = {
+  segments: number
+  // Current, non-empty texts whose latest review approved them, or asked
+  // for more work
+  approved: number
+  needs_work: number
+} & Record<Kind, number>
 
 // How far transcription has got, for the list of recordings: how many
-// segments have a current, non-empty text of each kind.
+// segments have a current, non-empty text of each kind, and how those texts
+// were reviewed.
 export async function segmentProgress(recordingIds: number[]) {
   const progress = new Map<number, Progress>()
   if (recordingIds.length === 0) return progress
@@ -111,13 +131,13 @@ export async function segmentProgress(recordingIds: number[]) {
   for (const row of segments) {
     progress.set(row.recording_id, {
       segments: Number(row.count),
+      approved: 0,
+      needs_work: 0,
       ...emptyCounts(),
     })
   }
 
-  const [counts] = await db.query(
-    `
-    SELECT s.recording_id, t.kind, COUNT(*) AS count
+  const current = `
     FROM fork_transcripts t
     JOIN fork_segments s ON s.id = t.segment_id
     JOIN (
@@ -126,11 +146,33 @@ export async function segmentProgress(recordingIds: number[]) {
       WHERE s2.recording_id IN (?)
       GROUP BY t2.segment_id, t2.kind
     ) latest ON latest.id = t.id
+  `
+  const [counts] = await db.query(
+    `
+    SELECT s.recording_id, t.kind, COUNT(*) AS count
+    ${current}
     WHERE t.text <> ''
     GROUP BY s.recording_id, t.kind
     `,
     [recordingIds]
   )
+  const [verdicts] = await db.query(
+    `
+    SELECT s.recording_id, r.verdict, COUNT(*) AS count
+    ${current}
+    JOIN fork_transcript_reviews r ON r.id = (
+      SELECT MAX(id) FROM fork_transcript_reviews WHERE transcript_id = t.id
+    )
+    WHERE t.text <> ''
+    GROUP BY s.recording_id, r.verdict
+    `,
+    [recordingIds]
+  )
+  for (const row of verdicts) {
+    const entry = progress.get(row.recording_id)
+    if (entry)
+      entry[row.verdict as 'approved' | 'needs_work'] = Number(row.count)
+  }
   for (const row of counts) {
     const entry = progress.get(row.recording_id)
     if (entry) entry[row.kind as Kind] = Number(row.count)
@@ -446,7 +488,10 @@ export const addTranscript = async (request: Request, response: Response) => {
       .status(StatusCodes.CONFLICT)
       .json({ message: 'changed meanwhile', current: result.conflict })
   }
-  response.status(StatusCodes.CREATED).json(result.saved)
+  const reviews = await latestReviews(user, [result.saved.id])
+  response
+    .status(StatusCodes.CREATED)
+    .json({ ...result.saved, review: reviews.get(result.saved.id) ?? null })
 }
 
 export const listTranscriptVersions = async (
@@ -461,9 +506,14 @@ export const listTranscriptVersions = async (
     `SELECT * FROM fork_transcripts WHERE segment_id = ? AND kind = ? ORDER BY id DESC`,
     [Number(request.params.segmentId), kind]
   )
+  const user = request.session.user
+  const reviews = await latestReviews(
+    user,
+    rows.map((row: TranscriptRow) => row.id)
+  )
   response.json(
     rows.map((row: TranscriptRow) =>
-      presentTranscript(request.session.user, row)
+      presentTranscript(user, row, reviews.get(row.id) ?? null)
     )
   )
 }

@@ -159,6 +159,16 @@ const RecordingCard = ({
             <p className="fork-stories__meta" />
           </Localized>
         )}
+        {recording.progress.approved + recording.progress.needs_work > 0 && (
+          <Localized
+            id="fork-stories-review-progress"
+            vars={{
+              approved: recording.progress.approved,
+              needsWork: recording.progress.needs_work,
+            }}>
+            <p className="fork-stories__meta" />
+          </Localized>
+        )}
         <audio
           controls
           preload="none"

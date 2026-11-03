@@ -77,7 +77,7 @@ language people contribute in. On private instances
 
 ## Community roles
 
-`admin`, `moderator` and `transcriber`, stored in `fork_user_roles`.
+`admin`, `moderator` and `reviewer`, stored in `fork_user_roles` (admins can do everything, moderators can also review).
 Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
 
 - `GET /api/v1/community/roles`: your own roles
@@ -126,6 +126,13 @@ Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
   /segments/:id/transcripts?kind=` lists them). A save names the version it
   started from; if someone else saved since, it gets 409 and the other text,
   and saving again replaces it knowingly.
+- Reviewers (and moderators and admins) mark the current version of a
+  text as checked or needing work, with an optional comment
+  (`POST /transcripts/:id/reviews`, `fork_transcript_reviews`). Nobody
+  reviews their own version, only the current version can be reviewed, and
+  a new version starts unreviewed. The page shows each text's status and
+  earlier versions (any of which can be restored and saved again), and can
+  show only segments with text that isn't checked yet.
 - The page plays a segment and stops at its end (or loops it), skips 5 s,
   and slows down to 0.5×. Esc plays or pauses the segment being typed in,
   except while an input method is composing.

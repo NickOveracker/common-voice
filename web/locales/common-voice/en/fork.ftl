@@ -148,6 +148,22 @@ fork-transcribe-no-segments = This recording has no segments yet.
 fork-transcribe-detect = Find segments automatically
 fork-transcribe-detecting = Finding segments… Long recordings take a while.
 
+## Reviewing transcripts
+fork-review-unreviewed = Not checked yet
+fork-review-approved = ✓ Checked
+fork-review-needs-work = Needs work
+fork-review-needs-work-comment = Needs work: { $comment }
+fork-review-approve = Mark as checked
+fork-review-request-changes = Needs work…
+fork-review-comment = What needs fixing (optional)
+fork-review-send = Send
+fork-review-history = Earlier versions
+fork-review-history-hide = Hide earlier versions
+fork-review-mine = (you)
+fork-review-restore = Use this version
+fork-review-filter = Only segments that need checking
+fork-stories-review-progress = { $approved } checked · { $needsWork } need work
+
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive
 

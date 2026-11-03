@@ -32,6 +32,7 @@ export type Speaker = {
   gender: string | null
   region: string | null
   notes: string | null
+  dialects: Dialect[]
   is_self: boolean
   can_manage: boolean
   consent: Consent | null
@@ -42,7 +43,7 @@ export type SpeakerFields = Partial<
   Pick<
     Speaker,
     'display_name' | 'full_name' | 'birth_year' | 'gender' | 'region' | 'notes'
-  >
+  > & { dialect_ids: number[] }
 >
 
 export type RecordingLanguage = 'ain' | 'ja'
@@ -53,6 +54,7 @@ export type Recording = {
   description: string | null
   // The prompt the recording answers
   prompt: Pick<Prompt, 'id' | 'text_ja' | 'text_ain'> | null
+  dialects: Dialect[]
   languages: RecordingLanguage[]
   source: 'browser' | 'upload'
   status: 'uploading' | 'processing' | 'ready' | 'failed'
@@ -85,6 +87,8 @@ export type NewRecording = {
   recorded_on?: string | null
   location?: string | null
   prompt_id?: number | null
+  // Leave out to use the speakers' dialects
+  dialect_ids?: number[]
   original_filename?: string | null
   original_mime?: string | null
 }
@@ -147,8 +151,15 @@ export const addConsent = (
 export const withdrawConsent = (speakerId: number, consentId: number) =>
   request<null>('POST', `/speakers/${speakerId}/consents/${consentId}/withdraw`)
 
-export const listRecordings = (mine = false) =>
-  request<Recording[]>('GET', `/recordings${mine ? '?mine=true' : ''}`)
+export const listRecordings = (
+  mine = false,
+  dialectId: number | null = null
+) => {
+  const query = new URLSearchParams()
+  if (mine) query.set('mine', 'true')
+  if (dialectId) query.set('dialect', String(dialectId))
+  return request<Recording[]>('GET', `/recordings?${query}`)
+}
 export const getRecording = (id: number) =>
   request<Recording>('GET', `/recordings/${id}`)
 export const createRecording = (recording: NewRecording) =>
@@ -329,3 +340,22 @@ export const listReports = (status: Report['status'] = 'open') =>
   )
 export const resolveReport = (id: number, resolution: string | null) =>
   request<null>('POST', `/reports/${id}/resolve`, { resolution })
+
+// Dialects: anyone can add one; admins rename and merge them
+export type Dialect = { id: number; name: string }
+
+export type DialectEntry = Dialect & {
+  // Names merged into this one
+  aliases: string[]
+  speakers: number
+  recordings: number
+}
+
+export const listDialects = () => request<DialectEntry[]>('GET', '/dialects')
+// Finds the dialect with this name (or a name merged into it), or adds it
+export const createDialect = (name: string) =>
+  request<Dialect & { created: boolean }>('POST', '/dialects', { name })
+export const renameDialect = (id: number, name: string) =>
+  request<null>('PATCH', `/dialects/${id}`, { name })
+export const mergeDialect = (id: number, intoId: number) =>
+  request<null>('POST', `/dialects/${id}/merge`, { into_id: intoId })

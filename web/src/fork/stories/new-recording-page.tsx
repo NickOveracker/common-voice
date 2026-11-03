@@ -15,6 +15,7 @@ import {
 import FORK_URLS from '../urls'
 import {
   createRecording,
+  Dialect,
   listPrompts,
   listSpeakers,
   Prompt,
@@ -22,6 +23,7 @@ import {
   Speaker,
 } from './api'
 import { uploadFile } from './chunked-upload'
+import DialectPicker from './dialect-picker'
 import { formatDuration } from './format'
 import { ChunkedRecorder, RecorderState, supportedMimeType } from './recorder'
 
@@ -35,6 +37,7 @@ type Details = {
   recordedOn: string
   location: string
   promptId: number | null
+  dialects: Dialect[]
 }
 
 const RECORDED_ON_PATTERN =
@@ -75,7 +78,10 @@ const DetailsForm = ({
     // Chosen on the prompts page
     promptId:
       Number(new URLSearchParams(window.location.search).get('prompt')) || null,
+    dialects: [],
   }))
+  // Until changed by hand, the dialects are those of the chosen speakers
+  const [dialectsChanged, setDialectsChanged] = React.useState(false)
   const [file, setFile] = React.useState<File | null>(null)
   const canRecordRef = React.useRef(supportedMimeType() !== null)
 
@@ -187,15 +193,26 @@ const DetailsForm = ({
                   )})`
             }
             checked={details.speakerIds.includes(speaker.id)}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              const speakerIds = toggle(
+                details.speakerIds,
+                speaker.id,
+                event.target.checked
+              )
               set({
-                speakerIds: toggle(
-                  details.speakerIds,
-                  speaker.id,
-                  event.target.checked
-                ),
+                speakerIds,
+                ...(dialectsChanged
+                  ? {}
+                  : {
+                      dialects: speakers
+                        .filter(s => speakerIds.includes(s.id))
+                        .flatMap(s => s.dialects)
+                        .filter(
+                          (d, i, all) => all.findIndex(o => o.id === d.id) === i
+                        ),
+                    }),
               })
-            }
+            }}
           />
         ))}
         <Hint id="fork-new-field-speakers-hint" />
@@ -203,6 +220,15 @@ const DetailsForm = ({
           <LinkButton rounded outline to={FORK_URLS.SPEAKERS} />
         </Localized>
       </fieldset>
+
+      <DialectPicker
+        label={l10n.getString('fork-new-field-dialects')}
+        value={details.dialects}
+        onChange={dialects => {
+          setDialectsChanged(true)
+          set({ dialects })
+        }}
+      />
 
       <LabeledInput
         label={`${l10n.getString(
@@ -457,6 +483,7 @@ const NewRecordingPage = () => {
         recorded_on: details.recordedOn.trim() || null,
         location: details.location.trim() || null,
         prompt_id: details.promptId,
+        dialect_ids: details.dialects.map(d => d.id),
         original_filename: file?.name ?? null,
         original_mime: file?.type || null,
       })

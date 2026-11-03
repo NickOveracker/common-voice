@@ -93,7 +93,7 @@ fork-speakers-field-display-name-hint = ニックネームやイニシャルで�
 fork-speakers-field-full-name = 本名
 fork-speakers-field-birth-year = 生まれた年
 fork-speakers-field-gender = 性別
-fork-speakers-field-region = 地域・方言
+fork-speakers-field-region = 地域（住んでいる・育った所）
 fork-speakers-field-notes = メモ
 fork-speakers-field-is-self = 自分自身
 fork-speakers-manage = 詳細と同意
@@ -228,6 +228,27 @@ fork-reports-none = 報告はありません。
 fork-reports-resolution = 対応の内容（任意）
 fork-reports-resolve = 対応済みにする
 fork-reports-resolved-by = { $who } が対応（{ $when }）：{ $resolution }
+
+## Dialects
+fork-speakers-field-dialects = 方言
+fork-new-field-dialects = 方言
+fork-dialects-add-label = 方言を追加
+fork-dialects-add = 追加
+fork-dialects-remove = { $name } を外す
+fork-dialects-hint = 一覧から選ぶか、新しく入力してください。方言は話者本人の申告に従います。同じものが別々に登録された場合は、管理者がまとめます。
+fork-stories-filter-dialect = 方言
+fork-stories-all-dialects = すべての方言
+fork-dialects-title = 方言
+fork-dialects-admin-intro = 方言は誰でも追加できます。同じ方言が別々に登録されたとき（たとえば「沙流」と「Saru」）は、一方をもう一方にまとめてください。話者と録音が移り、まとめた名前は別名として残ります。話者や録音の方言を直すには、それぞれのページで編集してください。
+fork-dialects-none = まだ方言がありません。
+fork-dialects-name = 名前
+fork-dialects-rename = 名前を変更
+fork-dialects-counts = 話者 { $speakers } · 録音 { $recordings }
+fork-dialects-aliases = 別名：{ $aliases }
+fork-dialects-merge-into = まとめる先
+fork-dialects-merge = まとめる
+fork-dialects-merge-confirm = 「{ $from }」を「{ $into }」にまとめますか？ 話者と録音は「{ $into }」に移ります。この画面では元に戻せません。
+fork-dialects-name-taken = 「{ $name }」はすでにあります。ひとつにするには、まとめてください。
 
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = アイヌ語音声アーカイブ

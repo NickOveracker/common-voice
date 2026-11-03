@@ -326,3 +326,74 @@
 .fork-stories__card .fork-review__comment {
   margin-block-start: 1rem;
 }
+
+/* Dialects */
+
+.fork-dialects {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fork-dialects__label {
+  font-weight: 600;
+}
+
+.fork-dialects__chosen {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fork-dialects__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.25rem 0.15rem 0.75rem;
+  border: 1px solid var(--light-grey, #e7e5e2);
+  border-radius: 1rem;
+  background: var(--white);
+}
+
+.fork-dialects__chip button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.15rem 0.4rem;
+  border-radius: 50%;
+}
+
+.fork-dialects__chip button:hover,
+.fork-dialects__chip button:focus-visible {
+  background: var(--desert-storm, #f3f2f0);
+}
+
+.fork-dialects__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.fork-dialects__add .labeled-form-control {
+  flex: 1 1 12rem;
+}
+
+.fork-dialects__add .button {
+  min-width: 0;
+  width: auto;
+  height: 2.5rem;
+}
+
+.fork-dialects__admin {
+  margin-block-start: 3rem;
+}
+
+.fork-stories__dialect-filter {
+  max-width: 20rem;
+  margin-block-end: 1rem;
+}

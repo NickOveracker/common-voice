@@ -2,6 +2,8 @@ import { Request, Response } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { getMySQLInstance } from '../../lib/model/db/mysql'
 import { hasRole } from '../roles'
+import { Dialect, dialectsOf, resolveDialectIds, setDialects } from './dialects'
+import { withTransaction } from './transaction'
 
 // Speakers are the people whose voices are recorded. Facilitators create
 // speakers for the elders they record; members can also create a speaker for
@@ -127,7 +129,8 @@ function toConsent(row: ConsentRow): Consent {
 async function presentSpeaker(
   user: SessionUser,
   row: SpeakerRow,
-  consent: Consent | undefined
+  consent: Consent | undefined,
+  dialects: Dialect[]
 ) {
   const canManage = await canManageSpeaker(user, row)
   return {
@@ -136,6 +139,7 @@ async function presentSpeaker(
     birth_year: row.birth_year,
     gender: row.gender,
     region: row.region,
+    dialects,
     is_self: row.client_id === user.client_id,
     can_manage: canManage,
     consent: consent ?? null,
@@ -150,11 +154,18 @@ export const listSpeakers = async (request: Request, response: Response) => {
   const [rows] = await db.query(
     `SELECT * FROM fork_speakers ORDER BY display_name, id`
   )
-  const consents = await currentConsents(rows.map((row: SpeakerRow) => row.id))
+  const ids = rows.map((row: SpeakerRow) => row.id)
+  const consents = await currentConsents(ids)
+  const dialects = await dialectsOf('speaker', ids)
   response.json(
     await Promise.all(
       rows.map((row: SpeakerRow) =>
-        presentSpeaker(user, row, consents.get(row.id))
+        presentSpeaker(
+          user,
+          row,
+          consents.get(row.id),
+          dialects.get(row.id) ?? []
+        )
       )
     )
   )
@@ -171,7 +182,12 @@ export const getSpeaker = async (request: Request, response: Response) => {
   )
   const consents = (await currentConsents([speaker.id])).get(speaker.id)
   response.json({
-    ...(await presentSpeaker(user, speaker, consents)),
+    ...(await presentSpeaker(
+      user,
+      speaker,
+      consents,
+      (await dialectsOf('speaker', [speaker.id])).get(speaker.id) ?? []
+    )),
     // Full consent history only for those who manage the speaker
     consent_history: (await canManageSpeaker(user, speaker))
       ? consentRows.map(toConsent)
@@ -181,7 +197,13 @@ export const getSpeaker = async (request: Request, response: Response) => {
 
 export const createSpeaker = async (request: Request, response: Response) => {
   const user = request.session.user
-  const { is_self, ...fields } = request.body
+  const { is_self, dialect_ids, ...fields } = request.body
+  const dialectIds = await resolveDialectIds(dialect_ids ?? [])
+  if (!dialectIds) {
+    return response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'unknown dialect' })
+  }
 
   if (is_self) {
     const [[existing]] = await db.query(
@@ -196,14 +218,18 @@ export const createSpeaker = async (request: Request, response: Response) => {
     }
   }
 
-  const [result] = await db.query(`INSERT INTO fork_speakers SET ?`, [
-    {
-      ...pick(fields, SPEAKER_FIELDS),
-      client_id: is_self ? user.client_id : null,
-      created_by: user.client_id,
-    },
-  ])
-  response.status(StatusCodes.CREATED).json({ id: result.insertId })
+  const id = await withTransaction(async connection => {
+    const [result] = await connection.query(`INSERT INTO fork_speakers SET ?`, [
+      {
+        ...pick(fields, SPEAKER_FIELDS),
+        client_id: is_self ? user.client_id : null,
+        created_by: user.client_id,
+      },
+    ])
+    await setDialects(connection, 'speaker', result.insertId, dialectIds)
+    return result.insertId
+  })
+  response.status(StatusCodes.CREATED).json({ id })
 }
 
 export const updateSpeaker = async (request: Request, response: Response) => {
@@ -214,10 +240,27 @@ export const updateSpeaker = async (request: Request, response: Response) => {
     return response.sendStatus(StatusCodes.FORBIDDEN)
   }
 
-  await db.query(`UPDATE fork_speakers SET ? WHERE id = ?`, [
-    pick(request.body, SPEAKER_FIELDS),
-    speaker.id,
-  ])
+  const dialectIds =
+    request.body.dialect_ids === undefined
+      ? undefined
+      : await resolveDialectIds(request.body.dialect_ids)
+  if (dialectIds === null) {
+    return response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'unknown dialect' })
+  }
+  const fields = pick(request.body, SPEAKER_FIELDS)
+  await withTransaction(async connection => {
+    if (Object.keys(fields).length > 0) {
+      await connection.query(`UPDATE fork_speakers SET ? WHERE id = ?`, [
+        fields,
+        speaker.id,
+      ])
+    }
+    if (dialectIds) {
+      await setDialects(connection, 'speaker', speaker.id, dialectIds)
+    }
+  })
   response.sendStatus(StatusCodes.NO_CONTENT)
 }
 

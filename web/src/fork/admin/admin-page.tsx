@@ -13,6 +13,8 @@ import {
   Role,
 } from '../stories/api'
 
+import DialectsAdmin from './dialects-admin'
+
 import '../stories/stories.css'
 import './admin.css'
 
@@ -174,6 +176,7 @@ const AdminPage = () => {
           <Localized id="fork-admin-configured-note">
             <p className="fork-stories__hint" />
           </Localized>
+          <DialectsAdmin />
         </>
       )}
     </Page>

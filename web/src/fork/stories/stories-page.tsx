@@ -6,6 +6,7 @@ import PageHeading from '../../components/ui/page-heading'
 import {
   Button,
   LabeledInput,
+  LabeledSelect,
   LinkButton,
   Spinner,
 } from '../../components/ui/ui'
@@ -14,6 +15,8 @@ import FORK_URLS from '../urls'
 import {
   completeRecording,
   getRecording,
+  DialectEntry,
+  listDialects,
   listRecordings,
   Recording,
   recordingAudioUrl,
@@ -112,6 +115,8 @@ const RecordingCard = ({
       {recording.speakers.map(speaker => speaker.display_name).join(', ')}
       {' · '}
       <RecordingLanguages languages={recording.languages} />
+      {recording.dialects.length > 0 &&
+        ` · ${recording.dialects.map(d => d.name).join(', ')}`}
       {recording.recorded_on && (
         <>
           {' · '}
@@ -220,17 +225,25 @@ const RecordingCard = ({
 )
 
 const StoriesPage = () => {
+  const { l10n } = useLocalization()
   const [mine, setMine] = React.useState(false)
+  const [dialectId, setDialectId] = React.useState<number | null>(null)
+  const [dialects, setDialects] = React.useState<DialectEntry[]>([])
   const [recordings, setRecordings] = React.useState<Recording[] | null>(null)
   const [error, setError] = React.useState<string | null>(null)
 
   const load = React.useCallback(() => {
-    listRecordings(mine)
+    listRecordings(mine, dialectId)
       .then(setRecordings)
       .catch(e => setError(e.message))
-  }, [mine])
+  }, [mine, dialectId])
 
   React.useEffect(load, [load])
+  React.useEffect(() => {
+    listDialects()
+      .then(all => setDialects(all.filter(d => d.recordings > 0)))
+      .catch((): null => null)
+  }, [])
 
   return (
     <Page className="fork-stories" isCentered>
@@ -263,6 +276,24 @@ const StoriesPage = () => {
           </Localized>
         </span>
       </div>
+      {dialects.length > 0 && (
+        <LabeledSelect
+          className="fork-stories__dialect-filter"
+          label={l10n.getString('fork-stories-filter-dialect')}
+          value={dialectId ?? ''}
+          onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+            setDialectId(Number(event.target.value) || null)
+          }>
+          <option value="">
+            {l10n.getString('fork-stories-all-dialects')}
+          </option>
+          {dialects.map(dialect => (
+            <option key={dialect.id} value={dialect.id}>
+              {dialect.name}
+            </option>
+          ))}
+        </LabeledSelect>
+      )}
 
       {error && (
         <Localized id="fork-error" vars={{ message: error }}>

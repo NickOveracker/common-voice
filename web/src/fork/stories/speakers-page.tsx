@@ -13,6 +13,7 @@ import {
 } from '../../components/ui/ui'
 import {
   addConsent,
+  Dialect,
   Consent,
   CONSENT_METHODS,
   ConsentMethod,
@@ -20,8 +21,10 @@ import {
   getSpeaker,
   listSpeakers,
   Speaker,
+  updateSpeaker,
   withdrawConsent,
 } from './api'
+import DialectPicker from './dialect-picker'
 
 import './stories.css'
 
@@ -184,6 +187,22 @@ const SpeakerDetails = ({
     <div className="fork-stories__details">
       {speaker.full_name && <p>{speaker.full_name}</p>}
       {speaker.notes && <p>{speaker.notes}</p>}
+      <DialectPicker
+        label={l10n.getString('fork-speakers-field-dialects')}
+        value={speaker.dialects}
+        onChange={async dialects => {
+          setError(null)
+          try {
+            await updateSpeaker(speaker.id, {
+              dialect_ids: dialects.map(d => d.id),
+            })
+            load()
+            onChange()
+          } catch (e) {
+            setError(e.message)
+          }
+        }}
+      />
       {speaker.consent && (
         <Localized id="fork-consent-withdraw">
           <Button
@@ -237,6 +256,7 @@ const NewSpeakerForm = ({ onCreated }: { onCreated: () => void }) => {
   }
   const [fields, setFields] = React.useState(empty)
   const [isSelf, setIsSelf] = React.useState(false)
+  const [dialects, setDialects] = React.useState<Dialect[]>([])
   const [error, setError] = React.useState<string | null>(null)
 
   const field = (name: keyof typeof empty, labelId: string, props = {}) => (
@@ -261,9 +281,11 @@ const NewSpeakerForm = ({ onCreated }: { onCreated: () => void }) => {
         region: orNull(fields.region),
         notes: orNull(fields.notes),
         is_self: isSelf,
+        dialect_ids: dialects.map(d => d.id),
       })
       setFields(empty)
       setIsSelf(false)
+      setDialects([])
       onCreated()
     } catch (e) {
       setError(e.message)
@@ -291,6 +313,11 @@ const NewSpeakerForm = ({ onCreated }: { onCreated: () => void }) => {
         max: 2100,
       })}
       {field('gender', 'fork-speakers-field-gender', { maxLength: 64 })}
+      <DialectPicker
+        label={l10n.getString('fork-speakers-field-dialects')}
+        value={dialects}
+        onChange={setDialects}
+      />
       {field('region', 'fork-speakers-field-region', { maxLength: 255 })}
       <LabeledTextArea
         label={l10n.getString('fork-speakers-field-notes')}
@@ -344,7 +371,13 @@ const SpeakersPage = () => {
               {speaker.display_name}
               {speaker.birth_year && ` (${speaker.birth_year})`}
             </h2>
-            {speaker.region && <p>{speaker.region}</p>}
+            {(speaker.dialects.length > 0 || speaker.region) && (
+              <p>
+                {speaker.dialects.map(d => d.name).join(', ')}
+                {speaker.dialects.length > 0 && speaker.region && ' · '}
+                {speaker.region}
+              </p>
+            )}
             {speaker.consent ? (
               <ConsentSummary consent={speaker.consent} />
             ) : (

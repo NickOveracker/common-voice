@@ -30,6 +30,12 @@ const speakerProperties: Record<string, JSONSchema7> = {
   gender: nullableString(64),
   region: nullableString(255),
   notes: nullableString(5000),
+  dialect_ids: {
+    type: 'array',
+    maxItems: 20,
+    uniqueItems: true,
+    items: { type: 'integer', minimum: 1 },
+  },
 }
 
 export const CreateSpeakerRequest: AllowedSchema = {
@@ -91,6 +97,12 @@ const recordingProperties: Record<string, JSONSchema7> = {
     items: { type: 'integer', minimum: 1 },
   },
   recorded_on: partialDate,
+  dialect_ids: {
+    type: 'array',
+    maxItems: 20,
+    uniqueItems: true,
+    items: { type: 'integer', minimum: 1 },
+  },
   // The approved prompt the recording answers
   prompt_id: { type: ['integer', 'null'], minimum: 1 },
   // Optional: many archived recordings have no known location
@@ -227,5 +239,23 @@ export const ResolveReportRequest: AllowedSchema = {
   additionalProperties: false,
   properties: {
     resolution: nullableString(5000),
+  },
+}
+
+export const CreateDialectRequest: AllowedSchema = {
+  type: 'object',
+  required: ['name'],
+  additionalProperties: false,
+  properties: {
+    name: { type: 'string', minLength: 1, maxLength: 255 },
+  },
+}
+
+export const MergeDialectRequest: AllowedSchema = {
+  type: 'object',
+  required: ['into_id'],
+  additionalProperties: false,
+  properties: {
+    into_id: { type: 'integer', minimum: 1 },
   },
 }

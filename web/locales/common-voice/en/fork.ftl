@@ -93,7 +93,7 @@ fork-speakers-field-display-name-hint = A nickname or initials is fine.
 fork-speakers-field-full-name = Real name
 fork-speakers-field-birth-year = Year of birth
 fork-speakers-field-gender = Gender
-fork-speakers-field-region = Region or dialect
+fork-speakers-field-region = Region (where they live or grew up)
 fork-speakers-field-notes = Notes
 fork-speakers-field-is-self = This is me
 fork-speakers-manage = Details and consent
@@ -231,6 +231,27 @@ fork-reports-none = No reports.
 fork-reports-resolution = What was done (optional)
 fork-reports-resolve = Mark as resolved
 fork-reports-resolved-by = Resolved by { $who }, { $when }: { $resolution }
+
+## Dialects
+fork-speakers-field-dialects = Dialect(s)
+fork-new-field-dialects = Dialect(s)
+fork-dialects-add-label = Add a dialect
+fork-dialects-add = Add
+fork-dialects-remove = Remove { $name }
+fork-dialects-hint = Choose from the list, or type a new one. Speakers say what they speak; admins merge entries that turn out to be the same.
+fork-stories-filter-dialect = Dialect
+fork-stories-all-dialects = All dialects
+fork-dialects-title = Dialects
+fork-dialects-admin-intro = Anyone can add a dialect. When two entries are the same (for example 沙流 and Saru), merge one into the other: its speakers and recordings move, and its name stays as another name for the entry. To correct a speaker's or recording's dialect, edit it on its own page.
+fork-dialects-none = No dialects yet.
+fork-dialects-name = Name
+fork-dialects-rename = Rename
+fork-dialects-counts = { $speakers } speakers · { $recordings } recordings
+fork-dialects-aliases = Also: { $aliases }
+fork-dialects-merge-into = Merge into
+fork-dialects-merge = Merge
+fork-dialects-merge-confirm = Merge “{ $from }” into “{ $into }”? Its speakers and recordings will move to “{ $into }”. This can't be undone here.
+fork-dialects-name-taken = “{ $name }” already exists. To make them one, merge instead.
 
 ## Site name, shown as plain text in place of the Common Voice logo
 fork-site-name = Ainu Voice Archive

@@ -8,6 +8,9 @@ const shots = process.argv[2] || '.'
 let step = 0
 const RUN = Date.now().toString(36)
 const SPEAKER = `エカシ ${RUN}`
+// New dialect names each run: names are shared by the whole site
+const DIALECT_KANJI = `沙流 ${RUN}`
+const DIALECT_LATIN = `Saru ${RUN}`
 const TITLE = `E2E ウエペケㇾ ${RUN}`
 const log = msg => console.log(`[${++step}] ${msg}`)
 
@@ -148,7 +151,13 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.getByLabel('表示名').fill(SPEAKER)
     await page.getByLabel('本名').fill('Test Elder')
     await page.getByLabel('生まれた年').fill('1935')
-    await page.getByLabel('地域・方言').fill('沙流')
+    await page.getByLabel('地域（住んでいる・育った所）').fill('平取')
+    // Anyone can add a dialect, without waiting for approval
+    await page.getByLabel('方言を追加').fill(DIALECT_KANJI)
+    await page.getByLabel('方言を追加').press('Enter')
+    await page
+      .locator(`.fork-dialects__chip:has-text("${DIALECT_KANJI}")`)
+      .waitFor()
     await page.click('button:has-text("保存")')
     await page.waitForSelector(`h2:has-text("${SPEAKER}")`)
     log('speaker created')
@@ -188,6 +197,16 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     await page.getByLabel('タイトル').fill(TITLE)
     await page.getByLabel('日本語').check({ force: true })
     await page.getByLabel(SPEAKER).check({ force: true })
+    // The speaker's dialect comes along; add another
+    await page
+      .locator(`.fork-dialects__chip:has-text("${DIALECT_KANJI}")`)
+      .waitFor()
+    await page.getByLabel('方言を追加').fill(DIALECT_LATIN)
+    await page.getByLabel('方言を追加').press('Enter')
+    await page
+      .locator(`.fork-dialects__chip:has-text("${DIALECT_LATIN}")`)
+      .waitFor()
+    log('dialect taken from the speaker, and another added')
     await page.getByLabel(/録音日/).fill('1972')
     await page.screenshot({ path: `${shots}/3-new.png`, fullPage: true })
     await page.click('button:has-text("今すぐ録音する")')
@@ -417,6 +436,31 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       `確認担当：reviewer-${RUN}`
     )
     log('facilitator made them a reviewer on the admin page')
+
+    // The admin merges the two dialect entries
+    const kanjiEntry = page.locator('.fork-dialects__entry', {
+      has: page.locator(`input[value="${DIALECT_KANJI}"]`),
+    })
+    await kanjiEntry
+      .getByLabel('まとめる先')
+      .selectOption({ label: DIALECT_LATIN })
+    page.once('dialog', dialog => dialog.accept())
+    await kanjiEntry.locator('button:has-text("まとめる")').click()
+    const latinEntry = page.locator('.fork-dialects__entry', {
+      has: page.locator(`input[value="${DIALECT_LATIN}"]`),
+    })
+    await latinEntry.locator(`text=別名：${DIALECT_KANJI}`).waitFor()
+    await page.screenshot({ path: `${shots}/8b-dialects.png`, fullPage: true })
+    await page.goto(`${BASE}/ain/stories`)
+    const merged = await page
+      .locator('li', { has: page.locator(`h2:has-text("${TITLE}")`) })
+      .locator('.fork-stories__meta')
+      .first()
+      .innerText()
+    log(`dialects merged; the story now shows: ${merged}`)
+    if (!merged.includes(DIALECT_LATIN) || merged.includes(DIALECT_KANJI)) {
+      throw new Error('merge did not move the recording')
+    }
     await page.screenshot({ path: `${shots}/8-admin.png`, fullPage: true })
 
     await reviewer.goto(storyUrl)
@@ -443,7 +487,9 @@ const log = msg => console.log(`[${++step}] ${msg}`)
       .locator('button:has-text("この録音について問題を報告する")')
       .click()
     await reviewer.getByLabel('どのような問題ですか').selectOption('consent')
-    await reviewer.getByLabel('詳細（任意）').fill(`家族の同意を確認したい ${RUN}`)
+    await reviewer
+      .getByLabel('詳細（任意）')
+      .fill(`家族の同意を確認したい ${RUN}`)
     await reviewer.locator('button:has-text("モデレーターに送る")').click()
     await reviewer
       .locator('text=送信しました。ありがとうございます。')

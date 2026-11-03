@@ -903,4 +903,117 @@ describeIntegration('stories API', () => {
       resolved_by: FACILITATOR.email,
     })
   })
+
+  it('lets anyone add dialects, and admins merge them', async () => {
+    // No approval needed; the same name in another case or width is found
+    const saru = await api(MEMBER, 'POST', '/dialects', { name: ' Saru ' })
+    expect(saru.status).toBe(201)
+    expect(saru.json).toMatchObject({ name: 'Saru', created: true })
+    for (const name of ['saru', 'Ｓａｒｕ']) {
+      const again = await api(FACILITATOR, 'POST', '/dialects', { name })
+      expect(again.json).toEqual({
+        id: saru.json.id,
+        name: 'Saru',
+        created: false,
+      })
+    }
+    const kanji = await api(FACILITATOR, 'POST', '/dialects', { name: '沙流' })
+    expect(kanji.status).toBe(201)
+
+    // Speakers say what they speak; recordings start with their speakers'
+    const speaker = await api(FACILITATOR, 'POST', '/speakers', {
+      display_name: 'Elder C',
+      region: '平取',
+      dialect_ids: [kanji.json.id],
+    })
+    await api(FACILITATOR, 'POST', `/speakers/${speaker.json.id}/consents`, {
+      archive: true,
+      community_use: false,
+      research: false,
+      speech_technology: false,
+      method: 'verbal',
+    })
+    const recording = await api(FACILITATOR, 'POST', '/recordings', {
+      title: 'Saru story',
+      languages: ['ain'],
+      speaker_ids: [speaker.json.id],
+      source: 'upload',
+    })
+    expect(
+      (await api(MEMBER, 'GET', `/recordings/${recording.json.id}`)).json
+        .dialects
+    ).toEqual([{ id: kanji.json.id, name: '沙流' }])
+    expect(
+      (
+        await api(FACILITATOR, 'POST', '/speakers', {
+          display_name: 'Nobody',
+          dialect_ids: [999999],
+        })
+      ).status
+    ).toBe(400)
+
+    // Only admins tidy up; renaming onto another entry is a merge instead
+    expect(
+      (
+        await api(MEMBER, 'POST', `/dialects/${kanji.json.id}/merge`, {
+          into_id: saru.json.id,
+        })
+      ).status
+    ).toBe(403)
+    expect(
+      (
+        await api(FACILITATOR, 'PATCH', `/dialects/${kanji.json.id}`, {
+          name: 'SARU',
+        })
+      ).status
+    ).toBe(409)
+    expect(
+      (
+        await api(FACILITATOR, 'POST', `/dialects/${kanji.json.id}/merge`, {
+          into_id: saru.json.id,
+        })
+      ).status
+    ).toBe(204)
+
+    // Everything moved, and the old name now finds the merged entry
+    const speakerAfter = await api(
+      MEMBER,
+      'GET',
+      `/speakers/${speaker.json.id}`
+    )
+    expect(speakerAfter.json.dialects).toEqual([
+      { id: saru.json.id, name: 'Saru' },
+    ])
+    const list = (await api(MEMBER, 'GET', '/dialects')).json
+    expect(list).toEqual([
+      {
+        id: saru.json.id,
+        name: 'Saru',
+        aliases: ['沙流'],
+        speakers: 1,
+        recordings: 1,
+      },
+    ])
+    expect(
+      (await api(MEMBER, 'POST', '/dialects', { name: '沙流' })).json.id
+    ).toBe(saru.json.id)
+    const filtered = (
+      await api(FACILITATOR, 'GET', `/recordings?dialect=${saru.json.id}`)
+    ).json
+    expect(filtered.map((r: { id: number }) => r.id)).toEqual([
+      recording.json.id,
+    ])
+
+    // Corrections: whoever manages the speaker (here an admin) changes it
+    expect(
+      (
+        await api(FACILITATOR, 'PATCH', `/speakers/${speaker.json.id}`, {
+          dialect_ids: [],
+        })
+      ).status
+    ).toBe(204)
+    expect(
+      (await api(MEMBER, 'GET', `/speakers/${speaker.json.id}`)).json.dialects
+    ).toEqual([])
+  })
 })

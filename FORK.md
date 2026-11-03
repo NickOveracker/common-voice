@@ -104,6 +104,15 @@ datasets with photos of other communities.
   technology; how and when it was given). It is never edited: changes add a
   new record, and withdrawal is marked on it. Recording a speaker needs
   current consent to archive.
+- Dialects (`server/src/fork/stories/dialects.ts`, `fork_dialects`):
+  speakers say what they speak, so anyone signed in adds a dialect without
+  approval. A name that matches an existing entry, ignoring case, width and
+  spacing, or a name merged into one, finds that entry instead. Admins
+  rename entries and merge duplicates (`POST /dialects/:id/merge`): the
+  speakers and recordings move, and the merged name stays as an alias.
+  Speakers and recordings have dialects (`fork_speaker_dialects`,
+  `fork_recording_dialects`); a new recording starts with its speakers'.
+  The speaker's free-text field is now region only.
 - Recordings are uploaded in chunks of up to 8 MiB (`PUT
   /recordings/:id/chunks/:index`), which also makes uploads resumable. On
   `POST /recordings/:id/complete` a background job joins the chunks, keeps

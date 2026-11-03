@@ -8,6 +8,13 @@ import { chunkPath, getAudioUrl, putObject } from './storage'
 import { queueRecordingProcessing } from './processing'
 import { emptyCounts, Progress, segmentProgress } from './segments'
 import { isApprovedPrompt, promptsById } from './prompts'
+import {
+  Dialect,
+  dialectsOf,
+  resolveDialectIds,
+  setDialects,
+  speakersDialectIds,
+} from './dialects'
 import { withTransaction } from './transaction'
 
 // Long recordings (stories, interviews, conversations). Audio is sent in
@@ -108,13 +115,15 @@ async function presentRecording(
   row: RecordingRow,
   speakers: { id: number; display_name: string }[],
   progress: Progress | undefined,
-  prompts: Awaited<ReturnType<typeof promptsById>>
+  prompts: Awaited<ReturnType<typeof promptsById>>,
+  dialects: Dialect[]
 ) {
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     prompt: row.prompt_id ? prompts.get(row.prompt_id) ?? null : null,
+    dialects,
     languages: row.languages ? row.languages.split(',') : [],
     source: row.source,
     status: row.status,
@@ -140,15 +149,19 @@ async function presentRecording(
 export const listRecordings = async (request: Request, response: Response) => {
   const user = request.session.user
   const mine = request.query.mine === 'true'
+  const dialect = Number(request.query.dialect) || null
   const [rows] = await db.query(
     `
     SELECT * FROM fork_recordings
     WHERE (? = 0 OR created_by = ?)
+      AND (? IS NULL OR id IN (
+        SELECT recording_id FROM fork_recording_dialects WHERE dialect_id = ?
+      ))
       -- Unfinished uploads are only shown to whoever is uploading them
       AND (status <> 'uploading' OR created_by = ?)
     ORDER BY created_at DESC, id DESC
     `,
-    [mine ? 1 : 0, user.client_id, user.client_id]
+    [mine ? 1 : 0, user.client_id, dialect, dialect, user.client_id]
   )
   const ids = rows.map((row: RecordingRow) => row.id)
   const speakers = await speakersByRecording(ids)
@@ -156,6 +169,7 @@ export const listRecordings = async (request: Request, response: Response) => {
   const prompts = await promptsById(
     rows.map((row: RecordingRow) => row.prompt_id).filter(Boolean)
   )
+  const dialects = await dialectsOf('recording', ids)
   response.json(
     await Promise.all(
       rows.map((row: RecordingRow) =>
@@ -164,7 +178,8 @@ export const listRecordings = async (request: Request, response: Response) => {
           row,
           speakers.get(row.id) ?? [],
           progress.get(row.id),
-          prompts
+          prompts,
+          dialects.get(row.id) ?? []
         )
       )
     )
@@ -187,7 +202,8 @@ export const getRecording = async (request: Request, response: Response) => {
       recording,
       speakers.get(recording.id) ?? [],
       (await segmentProgress([recording.id])).get(recording.id),
-      await promptsById(recording.prompt_id ? [recording.prompt_id] : [])
+      await promptsById(recording.prompt_id ? [recording.prompt_id] : []),
+      (await dialectsOf('recording', [recording.id])).get(recording.id) ?? []
     )),
     // Lets an interrupted upload continue where it stopped
     uploaded_chunks:
@@ -211,6 +227,15 @@ export const createRecording = async (request: Request, response: Response) => {
     return response
       .status(StatusCodes.BAD_REQUEST)
       .json({ message: 'unknown prompt' })
+  }
+  // Unless given, the speakers' dialects
+  const dialectIds = body.dialect_ids
+    ? await resolveDialectIds(body.dialect_ids)
+    : await speakersDialectIds(body.speaker_ids)
+  if (!dialectIds) {
+    return response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'unknown dialect' })
   }
 
   const id = await withTransaction(async connection => {
@@ -240,6 +265,7 @@ export const createRecording = async (request: Request, response: Response) => {
         ]),
       ]
     )
+    await setDialects(connection, 'recording', result.insertId, dialectIds)
     return result.insertId
   })
   response.status(StatusCodes.CREATED).json({ id })
@@ -253,7 +279,14 @@ export const updateRecording = async (request: Request, response: Response) => {
     return response.sendStatus(StatusCodes.FORBIDDEN)
   }
 
-  const { speaker_ids, languages, ...fields } = request.body
+  const { speaker_ids, languages, dialect_ids, ...fields } = request.body
+  const dialectIds =
+    dialect_ids === undefined ? undefined : await resolveDialectIds(dialect_ids)
+  if (dialectIds === null) {
+    return response
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ message: 'unknown dialect' })
+  }
   if (fields.prompt_id && !(await isApprovedPrompt(fields.prompt_id))) {
     return response
       .status(StatusCodes.BAD_REQUEST)
@@ -278,6 +311,9 @@ export const updateRecording = async (request: Request, response: Response) => {
         changes,
         recording.id,
       ])
+    }
+    if (dialectIds) {
+      await setDialects(connection, 'recording', recording.id, dialectIds)
     }
     if (speaker_ids) {
       await connection.query(

@@ -39,6 +39,10 @@ export type ForkConfig = {
   STRICT_CSP: boolean
   // Origin audio files are served from, e.g. https://storage.example.org
   STORAGE_ORIGIN: string
+  // Never make stored files publicly readable. Profile pictures are limited
+  // to the default avatars, and bulk submission emails link to files that
+  // need storage credentials to open.
+  PRIVATE_STORAGE: boolean
   // Public URL of this site, e.g. https://voice.example.org
   PUBLIC_URL: string
   // Send email through this SMTP server instead of AWS SES (or, outside
@@ -68,6 +72,7 @@ export function getForkConfig(): ForkConfig {
       LEGAL_DOCS_DIR: configEntry('CV_LEGAL_DOCS_DIR', '', castString),
       STRICT_CSP: configEntry('CV_STRICT_CSP', false, castBoolean),
       STORAGE_ORIGIN: configEntry('CV_STORAGE_ORIGIN', '', castString),
+      PRIVATE_STORAGE: configEntry('CV_PRIVATE_STORAGE', false, castBoolean),
       PUBLIC_URL: configEntry('CV_PUBLIC_URL', '', castString),
       SMTP_URL: configEntry('CV_SMTP_URL', '', castString),
     }

@@ -101,6 +101,9 @@ module.exports = (_env, argv) => {
       'process.env.CV_PRIVATE_INSTANCE': JSON.stringify(
         process.env.CV_PRIVATE_INSTANCE
       ),
+      'process.env.CV_CONTACT_EMAIL': JSON.stringify(
+        process.env.CV_CONTACT_EMAIL
+      ),
     }),
   ]
 

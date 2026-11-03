@@ -4,13 +4,16 @@ import * as React from 'react'
 import { trackNav, getTrackClass } from '../../../services/tracker'
 
 import { LocaleNavLink, useLocale } from '../../locale-helpers'
-import { menuItems } from './menu-items'
+import { menuItems as allMenuItems } from './menu-items'
+import { visibleMenuItems } from '../../../fork/visible-menu-items'
 import ContributeMenu from './contribute-menu'
 import { useAccount } from '../../../hooks/store-hooks'
 import { useOutsideClick } from '../../../hooks/use-outside-click'
 import { typedObjectKeys } from '../../../utility'
 
 import './nav.css'
+
+const menuItems = visibleMenuItems(allMenuItems)
 
 type NavProps = {
   id?: string

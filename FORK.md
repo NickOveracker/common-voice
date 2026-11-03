@@ -28,14 +28,19 @@ git merge upstream/main
 Conflicts should only happen in the files listed below. For `yarn.lock`,
 take upstream's version and run `yarn install`.
 
+Leave `CV_VERSION` unset so all pending migrations run, including upstream
+migrations that are older than ours. Fork migrations are named
+`*-fork-*.ts` and only create `fork_*` tables.
+
 ## Changes to upstream files
 
 | File | Change |
 |---|---|
 | `server/src/server.ts` | Static locale import instead of Pontoon; configurable robots.txt |
 | `server/src/lib/model.ts` | Skip Pontoon translation statistics with static locales |
-| `server/src/lib/api.ts` | `requireLoginMiddleware` after `authMiddleware` |
-| `server/src/auth-router.ts` | Ignore anonymous (Basic auth) clients when login is required |
+| `server/src/lib/api.ts` | `requireLoginMiddleware` after `authMiddleware`; `/community` router; only default avatars with `CV_PRIVATE_STORAGE` |
+| `server/src/auth-router.ts` | Ignore anonymous (Basic auth) clients when login is required; only allow same-site `?redirect=` after sign-in |
+| `server/src/infrastructure/storage/storage.ts` | `makePublic` does nothing with `CV_PRIVATE_STORAGE` |
 | `server/src/infrastructure/authentication/authentication.ts` | Production URL from `CV_PUBLIC_URL` |
 | `server/src/csp-header-value.ts` | Strict policy when `CV_STRICT_CSP` is set |
 | `server/src/fetch-legal-document.ts` | Local documents from `CV_LEGAL_DOCS_DIR` |
@@ -46,6 +51,20 @@ take upstream's version and run `yarn install`.
 | `web/src/services/tracker-ga4.ts` | Don't call `gtag` when analytics isn't loaded |
 | `web/src/components/layout/non-production-banner.tsx` | Hidden on private instances |
 | `web/src/main.ts` | Import `fork/fonts.css` |
+| `web/src/components/layout/layout.tsx` | Sign-in gate around page content; private footer |
+| `web/src/components/layout/content.tsx` | `privateInstanceRoutes()` first: own home page, hidden pages redirect home |
+| `web/src/components/layout/nav/nav.tsx` | Menus filtered by `visibleMenuItems()` |
+| `web/src/components/pages/profile/layout.tsx` | Avatar tab hidden on private instances |
+| `web/src/components/pages/profile/delete/delete.tsx` | Deletion requests go to `CV_CONTACT_EMAIL` |
+
+## Community roles
+
+`admin`, `moderator` and `transcriber`, stored in `fork_user_roles`.
+Emails in `CV_ADMIN_EMAILS` are always admins. API (signed-in users):
+
+- `GET /api/v1/community/roles`: your own roles
+- `GET /api/v1/community/admin/users`: users and their roles (admin)
+- `PUT|DELETE /api/v1/community/admin/users/:clientId/roles/:role` (admin)
 
 ## Settings
 

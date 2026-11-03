@@ -15,6 +15,7 @@ import UserClient from './lib/model/user-client'
 import * as jwt from 'jsonwebtoken'
 import * as cookieParser from 'cookie-parser'
 import { allowsAnonymousClient } from './fork/require-login'
+import { safeRedirect } from './fork/safe-redirect'
 
 const PromiseRouter = require('express-promise-router')
 const MySQLStore = require('express-mysql-session')(session)
@@ -85,7 +86,7 @@ export const setupAuthRouter = async () => {
               old_email: user.email,
             }
           : {}),
-        redirect: query.redirect || null,
+        redirect: safeRedirect(query.redirect),
         enrollment: {
           challenge: query.challenge || null,
           team: query.team || null,

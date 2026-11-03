@@ -8,6 +8,7 @@ import DocumentPage from '../pages/document-page'
 import { Spinner } from '../ui/ui'
 import { LoginFailure, LoginSuccess } from '../pages/login'
 import lazyWithRetry from '../../lazy-with-retry'
+import { privateInstanceRoutes } from '../../fork/private-routes'
 
 const HomePage = lazyWithRetry(() => import('../pages/home'))
 const DatasetsPage = lazyWithRetry(() => import('../pages/datasets/datasets'))
@@ -55,6 +56,7 @@ export default function Content({ location }: { location: any }) {
   return (
     <React.Suspense fallback={<Spinner />}>
       <Switch>
+        {privateInstanceRoutes(toLocaleRoute)}
         <SentryRoute
           exact
           path={toLocaleRoute(URLS.ROOT)}

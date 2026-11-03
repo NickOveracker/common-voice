@@ -74,6 +74,8 @@ import { projectSchema } from '../api/languages/validation/project-schema'
 import webhooksRouter from '../api/webhooks/routes'
 import { createMd5Hash } from '../infrastructure/crypto/crypto'
 import { requireLoginMiddleware } from '../fork/require-login'
+import { getForkConfig } from '../fork/config'
+import forkRouter from '../fork/routes'
 
 type NewNewsletterResponse = {
   message: string
@@ -116,6 +118,9 @@ export default class API {
 
     // Feature flag handling - should come early to set cookies
     router.use(this.handleFeatureMiddleware.handle)
+
+    // Fork endpoints (server/src/fork/routes.ts)
+    router.use('/community', forkRouter)
 
     // Public endpoints (no authentication required)
     router.use('/', this.getPublicRouter())
@@ -947,6 +952,10 @@ export default class API {
     const user = request.session.user // Guaranteed by middleware
     const client_id = user.client_id
     if (!body || !params) {
+      return response.sendStatus(StatusCodes.BAD_REQUEST)
+    }
+    // Uploaded pictures and Gravatar would be publicly readable or leak emails
+    if (getForkConfig().PRIVATE_STORAGE && params.type !== 'default') {
       return response.sendStatus(StatusCodes.BAD_REQUEST)
     }
     let avatarURL

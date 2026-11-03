@@ -11,6 +11,7 @@ import { InfoIcon } from '../../../ui/icons';
 import { Toggle, Hr, Button } from '../../../ui/ui';
 
 import './delete.css';
+import { CONTACT_EMAIL } from '../../../../fork/config';
 
 interface PropsFromState {
   user: User.State;
@@ -69,7 +70,7 @@ class DeleteProfile extends React.Component<Props, { keep: boolean }> {
             rounded
             onClick={() => {
               window.open(
-                'mailto:commonvoice@mozilla.com?subject=' +
+                `mailto:${CONTACT_EMAIL}?subject=` +
                   encodeURIComponent('Delete Profile') +
                   '&body=' +
                   encodeURIComponent(

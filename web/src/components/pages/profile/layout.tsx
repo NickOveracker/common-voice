@@ -31,6 +31,7 @@ import { ApiCredentials } from './api-credentials'
 
 import './layout.css'
 import { Spinner } from '../../ui/ui'
+import { IS_PRIVATE_INSTANCE } from '../../../fork/config'
 
 const SentryRoute = Sentry.withSentryRouting(Route)
 
@@ -75,7 +76,11 @@ const Layout = ({ toLocaleRoute, user }: Props) => {
                 ? { icon: <UserIcon />, id: 'profile' }
                 : { icon: <UserPlusIcon />, id: 'build-profile' }),
             },
-            { route: avatarRoute, icon: <CameraIcon />, id: 'avatar' },
+            !IS_PRIVATE_INSTANCE && {
+              route: avatarRoute,
+              icon: <CameraIcon />,
+              id: 'avatar',
+            },
             isFeaturePapi && {
               route: apiCredentialsRoute,
               icon: <CodeIcon />,

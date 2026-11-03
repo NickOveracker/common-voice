@@ -1,6 +1,7 @@
 import { Storage } from '@google-cloud/storage'
 import { taskEither as TE } from 'fp-ts'
 import { getConfig } from '../../config-helper'
+import { getForkConfig } from '../../fork/config'
 import { Readable } from 'stream'
 import { StatusCodes } from 'http-status-codes'
 
@@ -63,6 +64,7 @@ const makePublic =
   (path: string): TE.TaskEither<Error, void> =>
     TE.tryCatch(
       async () => {
+        if (getForkConfig().PRIVATE_STORAGE) return
         await storage.bucket(bucket).file(path).makePublic()
       },
       (err: Error) => err

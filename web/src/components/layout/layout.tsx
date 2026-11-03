@@ -26,6 +26,9 @@ import UserMenu from './user-menu'
 import cx from 'classnames'
 import WelcomeModal from '../welcome-modal/welcome-modal'
 import NonProductionBanner from './non-production-banner'
+import SignInGate from '../../fork/sign-in-gate'
+import PrivateFooter from '../../fork/private-footer'
+import { IS_PRIVATE_INSTANCE } from '../../fork/config'
 import {
   ChallengeTeamToken,
   challengeTeamTokens,
@@ -311,9 +314,17 @@ class Layout extends React.PureComponent<LayoutProps, LayoutState> {
           id="content"
           className={className}
           data-testid={pathParts[2] ? pathParts.slice(2).join(' ') : 'home'}>
-          {children ? children : <Content location={location} />}
+          <SignInGate>
+            {children ? children : <Content location={location} />}
+          </SignInGate>
         </main>
-        {shouldHideFooter ? <></> : <Footer />}
+        {shouldHideFooter ? (
+          <></>
+        ) : IS_PRIVATE_INSTANCE ? (
+          <PrivateFooter />
+        ) : (
+          <Footer />
+        )}
         <div
           id="navigation-modal"
           className={this.state.isMenuVisible ? 'active' : ''}>

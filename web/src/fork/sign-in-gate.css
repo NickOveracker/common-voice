@@ -15,3 +15,13 @@
   justify-content: center;
   margin-block-start: 1.5rem;
 }
+
+/* Upstream's menu hangs leftwards from the button's right edge, which suits
+   the header's corner but runs off a phone screen from a centred button */
+.sign-in-gate__language .menu-container {
+  inset-inline: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(320px, calc(100vw - 32px));
+  text-align: start;
+}

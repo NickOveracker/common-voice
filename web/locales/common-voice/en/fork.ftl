@@ -15,6 +15,7 @@ fork-menu-speakers-tooltip = People who are recorded, and their consent
 
 ## Shared
 fork-language-mixed = Mixed
+fork-interface-language-label = Changes the interface language only
 fork-save = Save
 fork-cancel = Cancel
 fork-loading = Loading…

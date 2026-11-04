@@ -15,6 +15,7 @@ fork-menu-speakers-tooltip = 録音される人とその同意
 
 ## Shared
 fork-language-mixed = 混在
+fork-interface-language-label = 画面の表示言語だけが変わります
 fork-save = 保存
 fork-cancel = キャンセル
 fork-loading = 読み込み中…

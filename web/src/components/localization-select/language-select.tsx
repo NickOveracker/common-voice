@@ -75,7 +75,11 @@ const LanguageSelect = ({
         options={items}
         currentValue={locale}
         buttonIcon={<GlobeBlackIcon viewBox="0 0 15 14" />}
-        searchBoxLabel={l10n.getString('dataset-searchbox-label')}
+        searchBoxLabel={l10n.getString(
+          IS_PRIVATE_INSTANCE
+            ? 'fork-interface-language-label'
+            : 'dataset-searchbox-label'
+        )}
         searchBoxPlaceholder={l10n.getString('dataset-searchbox-placeholder')}
         searchBoxAriaLabel={l10n.getString('dataset-searchbox-aria-label')}
         notFoundMessage={l10n.getString('dataset-search-no-results')}

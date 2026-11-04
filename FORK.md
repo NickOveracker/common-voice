@@ -53,7 +53,7 @@ migrations that are older than ours. Fork migrations are named
 | `web/src/main.ts` | Import `fork/fonts.css` |
 | `web/src/components/layout/layout.tsx` | Sign-in gate around page content; private footer; `LanguageSelect` imported from `fork/header-language-select`; `Logo` imported from `fork/logo` (site name as plain text, also the page title) |
 | `web/src/components/languages-provider.tsx` | URL locale and interface language kept apart via `fork/interface-locale` |
-| `web/src/components/localization-select/language-select.tsx` | No "request a language" link on private instances |
+| `web/src/components/localization-select/language-select.tsx` | No "request a language" link on private instances; its caption says it changes the interface language only |
 | `web/src/services/api.ts` | Privacy/terms fetched in the interface language |
 | `web/src/components/layout/content.tsx` | `privateInstanceRoutes()` first: own home page, hidden pages redirect home |
 | `web/src/components/layout/nav/nav.tsx` | Menus filtered by `visibleMenuItems()` |

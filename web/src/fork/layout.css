@@ -18,3 +18,9 @@ body.fork-signed-out .header .mars-login-icon,
 body.fork-signed-out .header .language-select-container {
   display: none !important;
 }
+
+/* Upstream stretches the footer's link column and left-aligns it; with only
+   two links of different lengths, centre each one */
+.fork-private-footer #moz-links .links > div {
+  align-items: center;
+}

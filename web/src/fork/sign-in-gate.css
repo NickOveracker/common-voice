@@ -5,3 +5,13 @@
 .sign-in-gate__button {
   margin-block-start: 2rem;
 }
+
+.sign-in-gate {
+  padding-block-end: 3rem;
+}
+
+.sign-in-gate__language {
+  display: flex;
+  justify-content: center;
+  margin-block-start: 1.5rem;
+}

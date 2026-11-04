@@ -5,11 +5,12 @@ import URLS from '../urls'
 import { LocaleLink } from '../components/locale-helpers'
 
 import '../components/layout/footer.css'
+import './layout.css'
 
 // Replaces the upstream footer (Mozilla links, newsletter, sharing, license)
 // on private instances.
 const PrivateFooter = React.memo(() => (
-  <footer>
+  <footer className="fork-private-footer">
     <div id="moz-links">
       <div className="divider-bottom" />
       <div className="links">

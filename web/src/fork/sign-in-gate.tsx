@@ -9,6 +9,7 @@ import PageHeading from '../components/ui/page-heading'
 import PageTextContent from '../components/ui/page-text-content'
 import URLS from '../urls'
 import { IS_PRIVATE_INSTANCE } from './config'
+import HeaderLanguageSelect from './header-language-select'
 
 import './sign-in-gate.css'
 
@@ -27,21 +28,33 @@ const isAnonymousPage = (pathname: string) => {
   return ANONYMOUS_PAGES.includes(page)
 }
 
-const SignInPage = () => (
-  <Page className="sign-in-gate" isCentered>
-    <PageHeading>
-      <Localized id="fork-sign-in-title" />
-    </PageHeading>
-    <PageTextContent>
-      <Localized id="fork-sign-in-body">
-        <p />
+const SignInPage = () => {
+  // Lets layout.css hide the menu and navigation while signed out
+  React.useEffect(() => {
+    document.body.classList.add('fork-signed-out')
+    return () => document.body.classList.remove('fork-signed-out')
+  }, [])
+
+  return (
+    <Page className="sign-in-gate" isCentered>
+      <PageHeading>
+        <Localized id="fork-sign-in-title" />
+      </PageHeading>
+      <PageTextContent>
+        <Localized id="fork-sign-in-body">
+          <p />
+        </Localized>
+      </PageTextContent>
+      <Localized id="fork-sign-in-button">
+        <LinkButton rounded href="/login" className="sign-in-gate__button" />
       </Localized>
-    </PageTextContent>
-    <Localized id="fork-sign-in-button">
-      <LinkButton rounded href="/login" className="sign-in-gate__button" />
-    </Localized>
-  </Page>
-)
+      {/* The header's language menu is hidden while signed out */}
+      <div className="sign-in-gate__language">
+        <HeaderLanguageSelect />
+      </div>
+    </Page>
+  )
+}
 
 // On private instances, everything except ANONYMOUS_PAGES requires sign-in.
 // The server enforces this too (server/src/fork/require-login.ts); this only

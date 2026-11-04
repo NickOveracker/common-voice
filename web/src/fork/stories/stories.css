@@ -397,3 +397,15 @@
   max-width: 20rem;
   margin-block-end: 1rem;
 }
+
+/* Consent: the ✓ and ✗ are the markers */
+.fork-stories__consent {
+  list-style: none;
+  padding-inline-start: 0;
+  margin-block: 0.25rem 0.75rem;
+}
+
+.fork-transcribe__back-link {
+  display: inline-block;
+  margin-block-end: 1rem;
+}

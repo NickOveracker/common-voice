@@ -8,9 +8,9 @@ import {
   Button,
   LabeledCheckbox,
   LabeledSelect,
-  LinkButton,
   Spinner,
 } from '../../components/ui/ui'
+import { LocaleLink } from '../../components/locale-helpers'
 import FORK_URLS from '../urls'
 import {
   addTranscript,
@@ -618,10 +618,8 @@ const RecordingPage = () => {
   return (
     <Page className="fork-stories fork-transcribe" isCentered>
       <Localized id="fork-transcribe-back-to-stories">
-        <LinkButton
-          rounded
-          outline
-          className="fork-transcribe__back"
+        <LocaleLink
+          className="fork-transcribe__back-link"
           to={FORK_URLS.STORIES}
         />
       </Localized>

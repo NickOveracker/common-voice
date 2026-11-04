@@ -36,7 +36,10 @@ fork-stories-status-processing = Processing…
 fork-stories-status-failed = Processing failed
 fork-stories-download-original = Download original
 fork-stories-transcribe = Transcribe and translate
-fork-stories-progress = { $segments } segments · transcribed in Latin letters { $latin }, katakana { $kana }{ $japanese ->
+fork-stories-progress = { $segments ->
+        [one] 1 segment
+       *[other] { $segments } segments
+    } · transcribed in Latin letters { $latin }, katakana { $kana }{ $japanese ->
         [0] {""}
        *[other] , Japanese { $japanese }
     } · translated into Japanese { $translated }
@@ -162,7 +165,10 @@ fork-review-history-hide = Hide earlier versions
 fork-review-mine = (you)
 fork-review-restore = Use this version
 fork-review-filter = Only segments that need checking
-fork-stories-review-progress = { $approved } checked · { $needsWork } need work
+fork-stories-review-progress = { $approved } checked · { $needsWork ->
+        [one] 1 needs work
+       *[other] { $needsWork } need work
+    }
 
 ## Admin
 fork-home-intro = A place for the Ainu community to keep its spoken stories, conversations and memories, and to transcribe and translate them together. Only members can see what is here.
@@ -246,7 +252,13 @@ fork-dialects-admin-intro = Anyone can add a dialect. When two entries are the s
 fork-dialects-none = No dialects yet.
 fork-dialects-name = Name
 fork-dialects-rename = Rename
-fork-dialects-counts = { $speakers } speakers · { $recordings } recordings
+fork-dialects-counts = { $speakers ->
+        [one] 1 speaker
+       *[other] { $speakers } speakers
+    } · { $recordings ->
+        [one] 1 recording
+       *[other] { $recordings } recordings
+    }
 fork-dialects-aliases = Also: { $aliases }
 fork-dialects-merge-into = Merge into
 fork-dialects-merge = Merge
@@ -278,7 +290,16 @@ fork-exports-status-building = Being built… Exports with audio take a while.
 fork-exports-status-ready = Ready
 fork-exports-status-failed = Failed
 fork-exports-status-deleted = Deleted
-fork-exports-contents = { $recordings } recordings · { $speakers } speakers · { $segments } segments · { $size }
+fork-exports-contents = { $recordings ->
+        [one] 1 recording
+       *[other] { $recordings } recordings
+    } · { $speakers ->
+        [one] 1 speaker
+       *[other] { $speakers } speakers
+    } · { $segments ->
+        [one] 1 segment
+       *[other] { $segments } segments
+    } · { $size }
 fork-exports-download = Download
 fork-exports-delete = Delete the file
 fork-exports-delete-confirm = Delete this export's file? The record that it was made stays.

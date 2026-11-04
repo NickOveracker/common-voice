@@ -1,0 +1,20 @@
+/* Private instances only: PrivateFooter (and so this file) is rendered only
+   there, and the rules below key on it or on classes set by fork code. */
+
+/* Short pages: the footer at the bottom of the screen, not mid-way */
+#main:has(.fork-private-footer) {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Signed out, every page is the sign-in page: no menu, no navigation (its
+   items need sign-in), and no second sign-in button, which on phones is a
+   generic avatar that looks like someone's profile */
+body.fork-signed-out .mobile-menu-icon,
+body.fork-signed-out .desktop-menu-icon,
+body.fork-signed-out #main-nav,
+body.fork-signed-out .header .login,
+body.fork-signed-out .header .mars-login-icon,
+body.fork-signed-out .header .language-select-container {
+  display: none !important;
+}

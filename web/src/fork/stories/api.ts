@@ -1,4 +1,5 @@
 // Client for the stories API (server/src/fork/stories/routes.ts).
+import { useLocalization } from '@fluent/react'
 
 const BASE = '/api/v1/community'
 
@@ -104,6 +105,29 @@ export class StoriesApiError extends Error {
   }
 }
 
+// The server's error messages are short English phrases. Pages show them in
+// the interface language instead: a known message by its own string
+// (fork-api-error-<message as a slug>), otherwise one for its status.
+let translate: ((id: string) => string | null) | null = null
+
+export function useApiErrorMessages() {
+  const { l10n } = useLocalization()
+  translate = id => (l10n.getBundle(id) ? l10n.getString(id) : null)
+}
+
+export function localizedErrorMessage(status: number, message: string) {
+  const slug = message
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  return (
+    translate?.(`fork-api-error-${slug}`) ||
+    translate?.(`fork-api-status-${status}`) ||
+    translate?.('fork-api-status-other') ||
+    message
+  )
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -128,7 +152,10 @@ async function request<T>(
     const error = await response.json().catch((): null => null)
     throw new StoriesApiError(
       response.status,
-      error?.message ?? response.statusText,
+      localizedErrorMessage(
+        response.status,
+        error?.message ?? response.statusText
+      ),
       error
     )
   }

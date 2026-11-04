@@ -59,7 +59,8 @@ migrations that are older than ours. Fork migrations are named
 | `web/src/components/layout/content.tsx` | `privateInstanceRoutes()` first: own home page, hidden pages redirect home |
 | `web/src/components/layout/nav/nav.tsx` | Menus filtered by `visibleMenuItems()` |
 | `web/src/components/pages/profile/layout.tsx` | Avatar tab hidden on private instances |
-| `web/src/components/pages/profile/delete/delete.tsx` | Deletion requests go to `CV_CONTACT_EMAIL` |
+| `web/src/components/pages/profile/delete/delete.tsx` | Deletion requests go to `CV_CONTACT_EMAIL`; on private instances the wording is about the archive (`fork-delete-q`, `fork-keep-info`, `fork-remove-info`), not Mozilla's dataset |
+| `web/src/components/pages/error-page/error-page.tsx` | On private instances, no Mozilla community links (Matrix, GitHub, Discourse), only the way home |
 | `web/src/components/pages/profile/info/info.tsx` | On private instances: no Mozilla newsletter checkbox or gender blog link (`hiddenOnPrivateInstance`), the community's privacy and terms wording, no separate terms dialog. Always (bug fixes): an empty gender choice; no `client_id` sent for an existing account, which upstream's server refused while the browser id was still being claimed |
 | `web/src/components/pages/profile/info/languages/languages.tsx` | No "request a language" link on private instances |
 | `web/src/components/pages/profile/settings/settings.tsx` | Email change requests go to `CV_CONTACT_EMAIL` |
@@ -73,8 +74,29 @@ language people contribute in. On private instances
 - The URL locale is the contribution language, one of
   `CV_CONTRIBUTABLE_LOCALES` (e.g. `/ain/speak`).
 - The interface language is a separate preference chosen in the header
-  menu. It defaults to Japanese (English if the browser asks for it); Ainu is
-  only used when picked.
+  menu. It defaults to Japanese (English if the browser asks for it). Ainu
+  isn't offered yet (`HIDDEN_INTERFACE_LOCALES`); its strings and fallbacks
+  are in place for when it is.
+
+### Japanese for upstream strings
+
+Upstream's Japanese (translated in Pontoon) covers under half of its
+strings, mostly on pages the fork hides. The ones that do show on a private
+instance are translated in `web/locales/common-voice/ja/fork-upstream.ftl`.
+Only messages upstream hasn't translated belong there:
+`web/src/fork/locales.test.ts` fails when Pontoon has since translated one
+(delete it from our file) or upstream has dropped it.
+
+`scripts/fork-e2e/untranslated.js`, run at the end of the browser test,
+serves every message without Japanese as a `⟦marker⟧` and walks the pages,
+menus and dialogs as a visitor, a new member, an admin (also on a phone)
+and a reviewer. It fails if a marker shows, and names the message and the
+page: translate it in `fork-upstream.ftl` (upstream strings) or `fork.ftl`.
+
+Error messages from the fork's server are short English phrases; the pages
+show them in the interface language (`fork-api-error-*` and
+`fork-api-status-*` in `fork.ftl`, see `localizedErrorMessage()` in
+`web/src/fork/stories/api.ts`).
 
 ## Community roles
 
@@ -249,8 +271,9 @@ login required and the strict CSP, and drives headless Chromium with a fake
 microphone through `scripts/fork-e2e/e2e.js`: sign-in gate, Keycloak login,
 Japanese interface on `/ain/` URLs, adding a speaker and consent, recording
 with pause/resume, processing, playback, switching the interface to
-English, and checking that no outside hosts are contacted. Run it after
-merging upstream. `scripts/fork-e2e/run.sh --clean` removes the containers.
+English, and checking that no outside hosts are contacted. It ends with
+`untranslated.js` (see above), which needs no English on the Japanese
+interface. Run it after merging upstream. `scripts/fork-e2e/run.sh --clean` removes the containers.
 
 ## Settings
 

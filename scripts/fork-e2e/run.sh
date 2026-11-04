@@ -80,7 +80,7 @@ docker run -d --name cvfork-web --network "$NET" "${USER_ARGS[@]}" -v "$REPO":/c
   -e CV_LOCALES=en,ja,ain -e CV_CONTRIBUTABLE_LOCALES=ain \
   -e CV_REQUIRE_LOGIN=true -e CV_ROBOTS_DISALLOW_ALL=true \
   -e CV_STRICT_CSP=true -e CV_PRIVATE_STORAGE=true -e CV_PRIVATE_INSTANCE=true \
-  -e CV_ADMIN_EMAILS=facilitator@example.org \
+  -e CV_ADMIN_EMAILS=facilitator@example.org -e CV_LEGAL_DOCS_DIR=/code/deploy/legal \
   "$NODE_IMAGE" node server/js/main.js >/dev/null
 until docker logs cvfork-web 2>&1 | grep -q "Maintenance complete"; do
   if docker logs cvfork-web 2>&1 | grep -q "Maintenance error"; then
@@ -96,3 +96,16 @@ docker run --rm --network container:cvfork-web "${USER_ARGS[@]}" -v "$WORK":/e2e
   "$PLAYWRIGHT_IMAGE" bash -c \
   "npm init -y >/dev/null && npm install --silent playwright@1.48.2 >/dev/null && node e2e.js /e2e/shots"
 echo "Screenshots: $WORK/shots"
+
+# No English on the Japanese interface (untranslated.js), including a first
+# sign-in by an account made just for it
+NEWCOMER="newcomer-$(date +%s)"
+K=(docker exec cvfork-keycloak /opt/keycloak/bin/kcadm.sh)
+"${K[@]}" config credentials --server http://localhost:8080 --realm master \
+  --user admin --password admin >/dev/null
+"${K[@]}" create users -r voice -s "username=$NEWCOMER" -s "email=$NEWCOMER@example.org" \
+  -s emailVerified=true -s enabled=true -s firstName=New -s lastName=Member >/dev/null
+"${K[@]}" set-password -r voice --username "$NEWCOMER" --new-password test1234
+cp "$REPO/scripts/fork-e2e/untranslated.js" "$WORK/"
+docker run --rm --network container:cvfork-web "${USER_ARGS[@]}" -v "$WORK":/e2e -w /e2e \
+  "$PLAYWRIGHT_IMAGE" node untranslated.js "$NEWCOMER"

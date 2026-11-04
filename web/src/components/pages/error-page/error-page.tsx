@@ -13,6 +13,7 @@ import Page from '../../ui/page'
 import PageHeading from '../../ui/page-heading'
 import PageTextContent from '../../ui/page-text-content'
 import VisuallyHidden from '../../visually-hidden/visually-hidden'
+import { IS_PRIVATE_INSTANCE } from '../../../fork/config'
 
 import './error-page.css'
 
@@ -29,6 +30,19 @@ const ErrorPage = ({ children, errorCode, prevPath }: Props) => {
 
   const headingLocalisationId = `error-title-${errorCode}`
 
+  // Private instances: no Mozilla community links, only the way back home
+  const privateContent = IS_PRIVATE_INSTANCE && (
+    <Localized
+      id={
+        errorCode === '404'
+          ? 'fork-error-page-content-404'
+          : 'fork-error-page-content'
+      }
+      elems={{ homepageLink: <LocaleLink to="" /> }}>
+      <p />
+    </Localized>
+  )
+
   return (
     <Page className="error-page">
       <div className="error-page-wrapper">
@@ -41,7 +55,7 @@ const ErrorPage = ({ children, errorCode, prevPath }: Props) => {
             <h2>
               <Localized id="error-code" vars={{ code: errorCode }} />
             </h2>
-            {children || (
+            {children || privateContent || (
               <React.Fragment>
                 <Localized
                   id={`error-content-${errorCode}`}

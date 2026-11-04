@@ -22,6 +22,47 @@ fork-loading = Loading…
 fork-error = Something went wrong: { $message }
 fork-optional = (optional)
 
+## Errors from the server, in place of its own short English messages
+## (fork-api-error-<the message as a slug>, see fork/stories/api.ts)
+fork-api-error-not-the-current-version = Someone else changed this in the meantime. Reload the page to see their version.
+fork-api-error-changed-meanwhile = Someone else saved this in the meantime. Their version is shown; add your changes to it.
+fork-api-error-cannot-review-your-own-version = You can't check a version you wrote yourself.
+fork-api-error-nothing-to-review = There is nothing to check yet.
+fork-api-error-unknown-prompt = That prompt doesn't exist or hasn't been approved yet.
+fork-api-error-unknown-dialect = That dialect no longer exists. Reload the page and choose again.
+fork-api-error-recording-is-no-longer-accepting-audio = This recording can't take any more audio.
+fork-api-error-empty-chunk = A piece of the audio arrived empty. Please try again.
+fork-api-error-recording-is-too-large = The recording is too large.
+fork-api-error-recording-is-already-complete = This recording is already complete.
+fork-api-error-missing-chunks = Part of the audio didn't arrive. Please upload it again.
+fork-api-error-cannot-remove-your-own-admin-role = You can't remove your own admin role.
+fork-api-error-unknown-user = That member doesn't exist.
+fork-api-error-admin-role-required = Only admins can do this.
+fork-api-error-moderator-role-required = Only moderators can do this.
+fork-api-error-reviewer-role-required = Only reviewers can do this.
+fork-api-error-already-transcribed = Segments can't be detected again once something has been transcribed. Adjust them by hand instead.
+fork-api-error-name-is-required = Enter a name.
+fork-api-error-another-dialect-has-this-name = Another dialect already has this name.
+fork-api-error-segment-is-not-in-this-recording = That segment isn't part of this recording. Reload the page.
+fork-api-error-you-already-have-a-speaker-profile = You already have a speaker entry for yourself.
+fork-api-error-text-ja-is-required = Enter the Japanese text.
+fork-api-status-400 = Something in the form isn't right. Check it and try again.
+fork-api-status-401 = You've been signed out. Sign in again.
+fork-api-status-403 = You don't have permission to do this.
+fork-api-status-404 = Not found. It may have been deleted; reload the page.
+fork-api-status-409 = Someone else changed this in the meantime. Reload the page.
+fork-api-status-413 = The file is too large.
+fork-api-status-other = The server couldn't do this. Try again in a moment.
+
+## Error page, without Mozilla's community links
+fork-error-page-content-404 = It may have moved or been deleted. Go back to the <homepageLink>home page</homepageLink>.
+fork-error-page-content = Reload the page, or go back to the <homepageLink>home page</homepageLink>. If it keeps happening, tell the archive's admins.
+
+## Deleting your account, about this archive rather than Mozilla's dataset
+fork-delete-q = When your account is deleted, would you like to ask for your recordings to be deleted too, or kept in the archive?
+fork-keep-info = Your recordings stay in the archive, under their speakers' consent as before.
+fork-remove-info = The archive's admins will review your request and let you know what they do.
+
 ## Stories list
 fork-stories-title = Stories
 fork-stories-new = New recording
@@ -232,6 +273,7 @@ fork-report-comment = Details (optional)
 fork-report-send = Send to moderators
 fork-report-sent = Sent. Thank you.
 fork-reports-title = Reports
+fork-reports-moderators-only = Only moderators can see reports.
 fork-reports-open = Open
 fork-reports-resolved = Resolved
 fork-reports-none = No reports.

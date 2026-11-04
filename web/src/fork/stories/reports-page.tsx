@@ -6,7 +6,9 @@ import PageHeading from '../../components/ui/page-heading'
 import { Button, LabeledInput, Spinner } from '../../components/ui/ui'
 import { LocaleLink } from '../../components/locale-helpers'
 import FORK_URLS from '../urls'
-import { listReports, Report, resolveReport } from './api'
+import { listReports, Report, resolveReport, StoriesApiError } from './api'
+
+const FORBIDDEN = 'forbidden'
 import { formatTime } from './format'
 
 import './stories.css'
@@ -106,7 +108,13 @@ const ReportsPage = () => {
     setError(null)
     listReports(status)
       .then(setReports)
-      .catch(e => setError(e.message))
+      .catch(e =>
+        setError(
+          e instanceof StoriesApiError && e.status === 403
+            ? FORBIDDEN
+            : e.message
+        )
+      )
   }, [status])
   React.useEffect(load, [load])
 
@@ -135,10 +143,16 @@ const ReportsPage = () => {
           </Localized>
         </span>
       </div>
-      {error && (
-        <Localized id="fork-error" vars={{ message: error }}>
-          <p className="fork-stories__error" role="alert" />
+      {error === FORBIDDEN ? (
+        <Localized id="fork-reports-moderators-only">
+          <p />
         </Localized>
+      ) : (
+        error && (
+          <Localized id="fork-error" vars={{ message: error }}>
+            <p className="fork-stories__error" role="alert" />
+          </Localized>
+        )
       )}
       {!reports && !error && <Spinner />}
       {reports?.length === 0 && (

@@ -22,6 +22,47 @@ fork-loading = 読み込み中…
 fork-error = エラーが発生しました: { $message }
 fork-optional = （任意）
 
+## Errors from the server, in place of its own short English messages
+## (fork-api-error-<the message as a slug>, see fork/stories/api.ts)
+fork-api-error-not-the-current-version = その間にほかの人が変更しました。ページを再読み込みすると、その版が表示されます。
+fork-api-error-changed-meanwhile = その間にほかの人が保存しました。その版を表示しているので、自分の変更を加えてください。
+fork-api-error-cannot-review-your-own-version = 自分で書いた版は確認できません。
+fork-api-error-nothing-to-review = まだ確認するものがありません。
+fork-api-error-unknown-prompt = そのテーマは存在しないか、まだ承認されていません。
+fork-api-error-unknown-dialect = その方言はもうありません。ページを再読み込みして、選び直してください。
+fork-api-error-recording-is-no-longer-accepting-audio = この録音には、これ以上音声を追加できません。
+fork-api-error-empty-chunk = 音声の一部が空のまま届きました。もう一度お試しください。
+fork-api-error-recording-is-too-large = 録音が大きすぎます。
+fork-api-error-recording-is-already-complete = この録音はすでに完了しています。
+fork-api-error-missing-chunks = 音声の一部が届いていません。もう一度アップロードしてください。
+fork-api-error-cannot-remove-your-own-admin-role = 自分の管理者の役割は外せません。
+fork-api-error-unknown-user = そのメンバーは存在しません。
+fork-api-error-admin-role-required = 管理者だけができる操作です。
+fork-api-error-moderator-role-required = モデレーターだけができる操作です。
+fork-api-error-reviewer-role-required = 確認担当だけができる操作です。
+fork-api-error-already-transcribed = 書き起こしが始まった録音では、区間を検出し直せません。区間は手で調整してください。
+fork-api-error-name-is-required = 名前を入力してください。
+fork-api-error-another-dialect-has-this-name = この名前の方言はすでにあります。
+fork-api-error-segment-is-not-in-this-recording = その区間はこの録音のものではありません。ページを再読み込みしてください。
+fork-api-error-you-already-have-a-speaker-profile = 自分自身の話者はすでに登録されています。
+fork-api-error-text-ja-is-required = 日本語の文を入力してください。
+fork-api-status-400 = 入力内容に問題があります。確認して、もう一度お試しください。
+fork-api-status-401 = ログアウトされました。もう一度ログインしてください。
+fork-api-status-403 = この操作をする権限がありません。
+fork-api-status-404 = 見つかりません。削除された可能性があります。ページを再読み込みしてください。
+fork-api-status-409 = その間にほかの人が変更しました。ページを再読み込みしてください。
+fork-api-status-413 = ファイルが大きすぎます。
+fork-api-status-other = サーバーで処理できませんでした。しばらくしてから、もう一度お試しください。
+
+## Error page, without Mozilla's community links
+fork-error-page-content-404 = 移動したか、削除された可能性があります。<homepageLink>ホーム</homepageLink>に戻ってください。
+fork-error-page-content = ページを再読み込みするか、<homepageLink>ホーム</homepageLink>に戻ってください。繰り返し起きる場合は、アーカイブの管理者に知らせてください。
+
+## Deleting your account, about this archive rather than Mozilla's dataset
+fork-delete-q = アカウントを削除するとき、あなたの録音も削除するよう依頼しますか？それともアーカイブに残しますか？
+fork-keep-info = あなたの録音はアーカイブに残り、これまでどおり話者の同意に従って扱われます。
+fork-remove-info = アーカイブの管理者が依頼を確認し、どう対応したかをお知らせします。
+
 ## Stories list
 fork-stories-title = 語り
 fork-stories-new = 新しい録音
@@ -223,6 +264,7 @@ fork-report-comment = 詳細（任意）
 fork-report-send = モデレーターに送る
 fork-report-sent = 送信しました。ありがとうございます。
 fork-reports-title = 報告
+fork-reports-moderators-only = 報告を見られるのはモデレーターだけです。
 fork-reports-open = 未対応
 fork-reports-resolved = 対応済み
 fork-reports-none = 報告はありません。

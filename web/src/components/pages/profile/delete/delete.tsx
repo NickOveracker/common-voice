@@ -11,7 +11,11 @@ import { InfoIcon } from '../../../ui/icons';
 import { Toggle, Hr, Button } from '../../../ui/ui';
 
 import './delete.css';
-import { CONTACT_EMAIL } from '../../../../fork/config';
+import { CONTACT_EMAIL, IS_PRIVATE_INSTANCE } from '../../../../fork/config';
+
+// On private instances, the wording is about the archive, not Mozilla's dataset
+const id = (upstreamId: string) =>
+  IS_PRIVATE_INSTANCE ? `fork-${upstreamId}` : upstreamId;
 
 interface PropsFromState {
   user: User.State;
@@ -30,7 +34,7 @@ class DeleteProfile extends React.Component<Props, { keep: boolean }> {
       <div className="profile-delete">
         <div className="top">
           <h2>
-            <Localized id="delete-q">
+            <Localized id={id('delete-q')}>
               <span />
             </Localized>
             *
@@ -52,7 +56,7 @@ class DeleteProfile extends React.Component<Props, { keep: boolean }> {
           </div>
           <div className="info">
             <InfoIcon />
-            <Localized id={keep ? 'keep-info' : 'remove-info'}>
+            <Localized id={id(keep ? 'keep-info' : 'remove-info')}>
               <div />
             </Localized>
           </div>

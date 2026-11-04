@@ -10,6 +10,7 @@ import PageTextContent from '../components/ui/page-text-content'
 import URLS from '../urls'
 import { IS_PRIVATE_INSTANCE } from './config'
 import HeaderLanguageSelect from './header-language-select'
+import { useApiErrorMessages } from './stories/api'
 
 import './sign-in-gate.css'
 
@@ -62,6 +63,7 @@ const SignInPage = () => {
 const SignInGate = ({ children }: { children: React.ReactNode }) => {
   const user = useTypedSelector(({ user }) => user)
   const { pathname } = useLocation()
+  useApiErrorMessages()
 
   if (!IS_PRIVATE_INSTANCE || isAnonymousPage(pathname)) {
     return <>{children}</>

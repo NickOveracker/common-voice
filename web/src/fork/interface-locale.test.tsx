@@ -82,8 +82,19 @@ describe('interface locale', () => {
   it('remembers the chosen interface language', () => {
     setNavigatorLanguages(['en-US'])
     const module = load(true)
-    module.setInterfaceLocale('ain')
-    expect(resolve(module)).toBe('ain')
+    module.setInterfaceLocale('ja')
+    expect(resolve(module)).toBe('ja')
+  })
+
+  it('keeps Ainu hidden as an interface language, even if stored', () => {
+    setNavigatorLanguages(['en-US'])
+    const module = load(true)
+    expect(module.selectableInterfaceLocales(['en', 'ja', 'ain'])).toEqual([
+      'en',
+      'ja',
+    ])
+    localStorage.setItem('interface-locale', 'ain')
+    expect(resolve(module)).toBe('en')
   })
 
   it('applies the stored choice once the languages have loaded', () => {

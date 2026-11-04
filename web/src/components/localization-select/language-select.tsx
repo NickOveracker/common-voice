@@ -30,6 +30,8 @@ interface Props {
   locale?: string
   userLanguages?: string[]
   isMobile?: boolean
+  // Only these languages are offered (fork)
+  locales?: string[]
   onLocaleChange?: (props: string) => void
 }
 
@@ -37,6 +39,7 @@ const LanguageSelect = ({
   locale,
   userLanguages,
   isMobile = false,
+  locales,
   onLocaleChange,
 }: Props) => {
   const getAvailableLocalesWithNames = () => {
@@ -58,8 +61,19 @@ const LanguageSelect = ({
   }
 
   const { l10n } = useLocalization()
-  const availableLocalesWithNames = getAvailableLocalesWithNames()
+  const availableLocalesWithNames = getAvailableLocalesWithNames().filter(
+    locale => !locales || locales.includes(locale?.code)
+  )
   const items = availableLocalesWithNames.map(locale => locale.code)
+  // Each language in its own name, so people find theirs whatever the
+  // interface is in
+  const nativeLabels = React.useMemo(
+    () =>
+      Object.fromEntries(
+        availableLocalesWithNames.map(({ code, name }) => [code, name])
+      ),
+    [items.join(',')]
+  )
 
   // don't show select if we dont have multiple locales
   if (items.length <= 1) {
@@ -87,6 +101,7 @@ const LanguageSelect = ({
           IS_PRIVATE_INSTANCE ? undefined : <RequestNewLanguageLink />
         }
         isMobile={isMobile}
+        optionLabels={IS_PRIVATE_INSTANCE ? nativeLabels : undefined}
         onChange={onLocaleChange}
       />
     </div>

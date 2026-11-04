@@ -17,9 +17,13 @@ import { IS_PRIVATE_INSTANCE } from './config'
 //   It defaults to Japanese, which all community members read.
 
 const DEFAULT_INTERFACE_LOCALE = 'ja'
-// Only offered automatically to browsers that ask for it. Ainu has to be
-// picked explicitly, as most of the interface isn't translated yet.
+// Only offered automatically to browsers that ask for it.
 const NEGOTIABLE_INTERFACE_LOCALES = ['ja', 'en']
+// Not offered as interface languages, and ignored if stored: Ainu stays
+// hidden until enough of the interface is translated into it. Its strings
+// and fallbacks (Ainu, then Japanese, then English) are already in place, so
+// removing it here is all it takes to offer it.
+export const HIDDEN_INTERFACE_LOCALES = ['ain']
 const STORAGE_KEY = 'interface-locale'
 
 let current: string | null = null
@@ -33,7 +37,15 @@ function readStored(): string | null {
   }
 }
 
-function resolveInterfaceLocale(available: ReadonlyArray<string>): string {
+// Interface languages people can choose from.
+export function selectableInterfaceLocales(
+  available: ReadonlyArray<string>
+): string[] {
+  return available.filter(locale => !HIDDEN_INTERFACE_LOCALES.includes(locale))
+}
+
+function resolveInterfaceLocale(allAvailable: ReadonlyArray<string>): string {
+  const available = selectableInterfaceLocales(allAvailable)
   const stored = readStored()
   if (stored && available.includes(stored)) return stored
 

@@ -24,6 +24,8 @@ interface DropDownProps {
   notFoundMessage?: string
   bottomComponent?: React.ReactNode
   isMobile?: boolean
+  // Labels by option, in place of the localized ones (fork)
+  optionLabels?: Record<string, string>
   onChange: (value: string) => void
 }
 
@@ -37,6 +39,7 @@ const DropDown = ({
   notFoundMessage,
   bottomComponent,
   isMobile = false,
+  optionLabels,
   onChange,
 }: DropDownProps) => {
   const { l10n } = useLocalization()
@@ -46,9 +49,9 @@ const DropDown = ({
     () =>
       options.map(code => ({
         code: code,
-        label: l10n.getString(code) || code,
+        label: optionLabels?.[code] || l10n.getString(code) || code,
       })),
-    [options, l10n]
+    [options, l10n, optionLabels]
   )
 
   const fuse = useMemo(() => {

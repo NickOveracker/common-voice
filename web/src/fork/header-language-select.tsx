@@ -3,13 +3,16 @@ import * as React from 'react'
 import LanguageSelect from '../components/localization-select/language-select'
 import { useTypedSelector } from '../stores/tree'
 import { IS_PRIVATE_INSTANCE } from './config'
-import { useInterfaceLocale } from './interface-locale'
+import {
+  selectableInterfaceLocales,
+  useInterfaceLocale,
+} from './interface-locale'
 
 type Props = React.ComponentProps<typeof LanguageSelect>
 
 // On private instances, the header language menu switches the interface
 // language only. The contribution language stays in the URL
-// (see interface-locale.ts).
+// (see interface-locale.ts). Hidden interface languages aren't offered.
 const HeaderLanguageSelect = (props: Props) => {
   const languages = useTypedSelector(({ languages }) => languages)
   const [interfaceLocale, setInterfaceLocale] = useInterfaceLocale(
@@ -24,6 +27,7 @@ const HeaderLanguageSelect = (props: Props) => {
     <LanguageSelect
       {...props}
       locale={interfaceLocale}
+      locales={selectableInterfaceLocales(languages.translatedLocales ?? [])}
       userLanguages={[]}
       onLocaleChange={setInterfaceLocale}
     />

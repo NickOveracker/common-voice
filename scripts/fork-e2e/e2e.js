@@ -608,6 +608,23 @@ const log = msg => console.log(`[${++step}] ${msg}`)
     log(`English interface at ${page.url()}`)
     await page.screenshot({ path: `${shots}/6-english.png`, fullPage: true })
 
+    // The menu names each language in itself, and doesn't offer Ainu yet;
+    // a stored Ainu choice falls back to the default
+    await page.click('.header .language-select-container button')
+    const offered = await page
+      .locator('.header .language-select-container .dropdown-item')
+      .allInnerTexts()
+    log(`interface languages offered: ${offered.join(', ')}`)
+    if (offered.join(',') !== 'English,日本語')
+      throw new Error('interface languages should be English and 日本語')
+    await page.keyboard.press('Escape')
+    await page.evaluate(() => localStorage.setItem('interface-locale', 'ain'))
+    await page.goto(`${BASE}/ain/stories`)
+    await page.getByRole('heading', { name: '語り', exact: true }).waitFor()
+    await page.evaluate(() => localStorage.setItem('interface-locale', 'en'))
+    await page.goto(`${BASE}/ain/stories`)
+    await page.getByRole('heading', { name: 'Stories' }).waitFor()
+
     // Phone width: no page wider than the screen
     await page.setViewportSize({ width: 390, height: 844 })
     for (const [path, heading] of [
